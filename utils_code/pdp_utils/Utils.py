@@ -1,6 +1,8 @@
 import numpy as np
 from collections import namedtuple
 
+from numba import jit
+
 
 def load_problem(filename):
     """
@@ -185,7 +187,6 @@ def cost_function(Solution, problem):
     FirstTravelCost = problem['FirstTravelCost']
     PortCost = problem['PortCost']
 
-
     NotTransportCost = 0
     RouteTravelCost = np.zeros(num_vehicles)
     CostInPorts = np.zeros(num_vehicles)
@@ -218,5 +219,5 @@ def cost_function(Solution, problem):
                 RouteTravelCost[i] = np.sum(np.hstack((FirstVisitCost, Diag.flatten())))
                 CostInPorts[i] = np.sum(PortCost[i, currentVPlan]) / 2
 
-    TotalCost = NotTransportCost + sum(RouteTravelCost) + sum(CostInPorts)
+    TotalCost = NotTransportCost + np.sum(RouteTravelCost) + np.sum(CostInPorts)
     return TotalCost
