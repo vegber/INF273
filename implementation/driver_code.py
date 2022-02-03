@@ -1,4 +1,4 @@
-import sys
+import multiprocessing as mp
 import time
 
 from numpy import mean
@@ -46,7 +46,7 @@ def calculate(problem: int, perm_mode, call: int):
     for rounds in range(10):
 
         round_Costs = []  # initialize lists
-        current_lowest_cost = init_cost # sys.maxsize  # init max size
+        current_lowest_cost = init_cost  # sys.maxsize  # init max size
 
         start = time.time()
         for x in range(10000):  # 10 000 iterations
@@ -77,20 +77,43 @@ def calculate(problem: int, perm_mode, call: int):
 
 def main_run(mode: int, swag, call):
     avg_cost_p_round, min_cost_p_round, times_, improv = calculate(mode, swag, call)
+    printoutput(avg_cost_p_round, improv, min_cost_p_round, mode, times_)
+
+
+def printoutput(avg_cost_p_round, improv, min_cost_p_round, mode, times_):
     # print(f"| \t Average objective | \t Best Objective | \t Improvement | \t\t Running time |", end="\n")
     print(f"Running {filename(mode)}: ")
-    print("| \t %s \t | \t %s \t | \t %s \t\t | \t %s \t |" % (
+    print("\t | \t %s \t | \t %s \t | \t %s \t | \t %s \t |".format() % (
         "Average objective", "Best Objective", "Improvement", "RunTime"))
-    print("=" * 95)
+    print("=" * 90)
     for index in range(len(avg_cost_p_round)):
         avg, best, impr, run = avg_cost_p_round[index], min_cost_p_round[index], improv[index], times_[index]
-        print("(%d) | \t %s \t | \t %s \t | \t %s \t | \t %s \t |" % (
+        print("%4d | \t %10s \t\t | \t %10s \t\t | \t %10s \t | \t %10s  |".format() % (
             index + 1, str(np.round(avg, 2)), str(round(best, 2)), str(round(impr, 2)), str(round(run, 2))), end="\n")
     print("\n" * 2)
 
 
-main_run(1, 3, 7)
-main_run(2, 5, 18)
-main_run(3, 20, 80)
-main_run(4, 40, 130)
-main_run(5, 90, 300)
+def run_all(var: int):
+    if var == 1:
+        main_run(1, 3, 7)
+    if var == 2:
+        main_run(2, 5, 18)
+    if var == 3:
+        main_run(3, 20, 80)
+    if var == 4:
+        main_run(4, 40, 130)
+    if var == 5:
+        main_run(5, 90, 300)
+
+
+if __name__ == '__main__':
+    start = time.time()
+
+    cores = mp.cpu_count()
+    print("Number of processors: ", mp.cpu_count())
+    pool = mp.Pool(processes=5)
+
+    pool.map(run_all, range(1, 5))
+
+    stop = time.time()
+    print(f"Totall time was {stop - start}")
