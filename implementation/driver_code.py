@@ -1,7 +1,6 @@
 import sys
 import time
 
-import numpy as np
 from numpy import mean
 
 from utils_code.pdp_utils import *
@@ -26,51 +25,58 @@ def filename(file: int):
 sol = [7, 7, 5, 5, 0, 2, 2, 0, 3, 4, 4, 3, 1, 1, 0, 6, 6]
 
 
-def get_permutation(vehicle: int):
-    return np.random.permutation([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7] + [0] * vehicle)
+def get_permutation(vehicle: int, call: int):
+    return np.random.permutation([0] * vehicle + list(range(1, call)) * 2)
 
 
-def calculate(problem: int, perm_mode):
+def get_init(vehicle: int, call: int):
+    return np.array([0] * vehicle + list(range(1, call)) * 2)
+
+
+def calculate(problem: int, perm_mode, call: int):
     avg_cost_p_round = []
     min_cost_p_round = []
     times_ = []
     improv = []
     problemos = load_correct_file(problem)
 
+    init_sol = get_init(perm_mode, call)
+    init_cost = cost_function(init_sol, problemos)
+
     for rounds in range(10):
 
         round_Costs = []  # initialize lists
-        curr_diff = sys.maxsize  # init max size
+        current_lowest_cost = init_cost # sys.maxsize  # init max size
 
         start = time.time()
         for x in range(10000):  # 10 000 iterations
 
-            curr_ = get_permutation(perm_mode)  # get random permutation
-            feasiblity, c = \
-                feasibility_check(curr_, problemos)  # Check if feasible sol
+            curr_ = get_permutation(perm_mode, call)  # get random permutation
+            feasiblity, c = feasibility_check(curr_, problemos)  # Check if feasible sol
 
             if feasiblity:
                 one_round_cost = cost_function(curr_, problemos)  # find cost
                 round_Costs.append(one_round_cost)  # add to round cost
-                if one_round_cost < curr_diff:
-                    curr_diff = one_round_cost
+
+                if one_round_cost < current_lowest_cost:
+                    current_lowest_cost = one_round_cost
 
         stop = time.time()
         times_.append(stop - start)
 
-        improv.append(curr_diff)
         if len(round_Costs) == 0:
-            avg_cost_p_round.append(0)
-            min_cost_p_round.append(0)
+            avg_cost_p_round.append(init_cost)
+            min_cost_p_round.append(init_cost)
         else:
             avg_cost_p_round.append(mean(round_Costs))
             min_cost_p_round.append(np.min(round_Costs))
 
+        improv.append(100 * (init_cost - current_lowest_cost) / init_cost)
     return avg_cost_p_round, min_cost_p_round, times_, improv
 
 
-def main_run(mode: int, swag):
-    avg_cost_p_round, min_cost_p_round, times_, improv = calculate(mode, swag)
+def main_run(mode: int, swag, call):
+    avg_cost_p_round, min_cost_p_round, times_, improv = calculate(mode, swag, call)
     # print(f"| \t Average objective | \t Best Objective | \t Improvement | \t\t Running time |", end="\n")
     print(f"Running {filename(mode)}: ")
     print("| \t %s \t | \t %s \t | \t %s \t\t | \t %s \t |" % (
@@ -83,8 +89,8 @@ def main_run(mode: int, swag):
     print("\n" * 2)
 
 
-main_run(1, 3)
-main_run(2, 5)
-main_run(3, 20)
-main_run(4, 40)
-main_run(5, 90)
+main_run(1, 3, 7)
+main_run(2, 5, 18)
+main_run(3, 20, 80)
+main_run(4, 40, 130)
+main_run(5, 90, 300)
