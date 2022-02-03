@@ -3,10 +3,12 @@ import time
 from numpy import mean
 from utils_code.pdp_utils import *
 import os
+from natsort import natsorted, ns
+path = '../utils_code/pdp_utils/data/pd_problem/'
 
 
 def file_list():
-    return sorted((os.listdir('../utils_code/pdp_utils/data/pd_problem/')))
+    return natsorted(os.listdir(path), key=lambda y:y.lower())
 
 
 def extract_values(filename: str) -> tuple:
@@ -15,12 +17,3 @@ def extract_values(filename: str) -> tuple:
     return vals[0], vals[1]
 
 
-def file_data():
-    file_info = {}
-    data_files = file_list()
-    # for x in range(len(data_files)):
-    #    file_info[x] = []
-    print(data_files)
-
-
-file_data()
