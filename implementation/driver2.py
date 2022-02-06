@@ -80,10 +80,9 @@ def calculate(problem: object, vehicle: int, call: int):
     sorted_10_best_solutions = sort_tuple(best_sol_cost_pairs)
     all_time_best_cost = np.round(sorted_10_best_solutions[0][1], 2)
     improvement = np.round(100 * (init_cost - all_time_best_cost) / init_cost, 2)
-    print(improvement)
     avg_running_time = np.round(np.average(times_), 2)
     avg_objective_cost = np.round(avg_Cost(sorted_10_best_solutions), 2)
-    best_solution_ = np.round(sorted_10_best_solutions[0][0], 2)
+    best_solution_ = sorted_10_best_solutions[0][0]
     return avg_objective_cost, all_time_best_cost, improvement, avg_running_time, best_solution_
 
 
@@ -92,23 +91,34 @@ def store(avg, bst_cost, impr, time, bst_sol, pd_problem_file):
     times.append(time), bst_solutions.append(bst_sol)
 
 
+def format_bst_sols():
+    solutions_as_str = []
+    for sol in bst_solutions:
+        sol_str = ','.join(map(str, sol))
+
+        """for index_ in sol:
+            sol_str += str(index_)"""
+        solutions_as_str.append(sol_str)
+    return solutions_as_str
+
+
 def to_pandas():
-    print(type(avg_objs))
+    best_solution_secondtry = format_bst_sols()
     data = {
         ' ': 'Random Solution',
         'Average Objective': avg_objs,
         'Best Objective': bst_costs,
         'Improbements': improvements,
         'Running Time': times,
-        'Solutions': bst_solutions
+        'Solutions': best_solution_secondtry # bst_solutions
     }
     pd.option_context('display.max_colwidth', None, "display.max_rows", None, 'display.max_columns', None)
     df = pd.DataFrame(data)
-    csv = df.to_csv()
+    # csv = df.to_csv()
     # html = df.to_html()
-    # html_table_blue_light = build_table(df, 'blue_light')
-    file = open('out.csv', 'w+')
-    file.write(csv)
+    html_table_blue_light = build_table(df, 'blue_light')
+    file = open('index.html', 'w+')
+    file.write(html_table_blue_light)
     file.close()
 
 
@@ -117,9 +127,8 @@ def main_run(pd_problem_file: str):
     problem = load_problem(path + pd_problem_file)
     avg, bst_cost, impr, time, bst_sol = calculate(problem, vehicle, call)
     store(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
-    # print_term(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
+    print_term(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
     # print(bst_sol, end="\n")
-    to_pandas()
 
 
 def print_term(avg_obj, best_obj, imprv, time, best_sol, file_name):
@@ -142,6 +151,7 @@ def run_all(processor_nbr: int):
 if __name__ == '__main__':
     for x in range(len(file_list)):
         run_all(x)
+    to_pandas()
 
 """if __name__ == '__main__':
     start_tot = time.time()
