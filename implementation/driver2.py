@@ -1,12 +1,13 @@
-import multiprocessing as mp
-import time
-import pandas as pd
-import numpy as np
-from numpy import mean
-from utils_code.pdp_utils import *
-from natsort import natsorted, ns
 import os
+import random
+import time
+from collections.abc import Iterable
+
+import pandas as pd
+from natsort import natsorted
 from pretty_html_table import build_table
+
+from utils_code.pdp_utils import *
 
 path = '../utils_code/pdp_utils/data/pd_problem/'
 file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
@@ -29,11 +30,53 @@ sol = [7, 7, 5, 5, 0, 2, 2, 0, 3, 4, 4, 3, 1, 1, 0, 6, 6]
 
 
 def get_permutation(vehicle: int, call: int):
-    return np.random.permutation([0] * vehicle + list(range(1, call)) * 2)
+    actual_solution = []
+    solution_space = []
+    available_calls = []
+
+    available_calls.extend(range(1, call + 1))
+    cars = 3  # random.randint(0, vehicle)
+
+    for car in range(cars):
+        # find random calls for each car
+        car_choice = random.sample(available_calls, (random.randint(0, len(available_calls))))
+        # append calls to solution list
+        solution_space.append(car_choice)
+        # remove calls in use:
+        available_calls = [i for i in available_calls if i not in car_choice]
+
+    # solution space need to be doubled, and permuted
+    # then solution space need to be added together, and separated with zero
+
+    for vehicle_call in solution_space:
+        # a list of calls - could be empty
+        if len(vehicle_call) == 0:
+            actual_solution.append(0)
+        else:
+            elements = [elem for elem in vehicle_call] * 2
+            random.shuffle(elements)
+            vehicle_call_ = elements + [0]
+            actual_solution.append(vehicle_call_)
+
+    # if not, all cars is used, and we need to out-source the rest
+    if len(available_calls) != 0:
+        remaining_calls = [elem for elem in available_calls] * 2
+        random.shuffle(remaining_calls)
+        actual_solution.append(remaining_calls)
+
+    return np.array(list(map(int, flatten(actual_solution))))
+
+
+def flatten(l):
+    for el in l:
+        if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
+            yield from flatten(el)
+        else:
+            yield el
 
 
 def get_init(vehicle: int, call: int):
-    return np.array([0] * vehicle + list(range(1, call)) * 2)
+    return np.array([0] * vehicle + list(range(1, call+1)) * 2)
 
 
 def sort_tuple(best_sol_cost_pairs):
@@ -110,7 +153,7 @@ def to_pandas():
         'Best Objective': bst_costs,
         'Improbements': improvements,
         'Running Time': times,
-        'Solutions': best_solution_secondtry # bst_solutions
+        'Solutions': best_solution_secondtry  # bst_solutions
     }
     pd.option_context('display.max_colwidth', None, "display.max_rows", None, 'display.max_columns', None)
     df = pd.DataFrame(data)
@@ -125,6 +168,7 @@ def to_pandas():
 def main_run(pd_problem_file: str):
     call, vehicle = map(int, extract_values(pd_problem_file))
     problem = load_problem(path + pd_problem_file)
+    print(call)
     avg, bst_cost, impr, time, bst_sol = calculate(problem, vehicle, call)
     store(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
     print_term(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
