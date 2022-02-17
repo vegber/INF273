@@ -95,7 +95,6 @@ def calculate(problem: object, vehicle: int, call: int):
     init_cost = cost_function(init_sol, problem)  # initial worst cost
 
     for rounds in range(10):
-        round_times = []
         current_lowest_cost = init_cost  # init max size
         solution_cost = []
         start_pr_iter = time.time()
@@ -151,7 +150,7 @@ def to_pandas():
         ' ': 'Random Solution',
         'Average Objective': avg_objs,
         'Best Objective': bst_costs,
-        'Improbements': improvements,
+        'Improvements': improvements,
         'Running Time': times,
         'Solutions': best_solution_secondtry  # bst_solutions
     }
@@ -172,7 +171,6 @@ def main_run(pd_problem_file: str):
     avg, bst_cost, impr, time, bst_sol = calculate(problem, vehicle, call)
     store(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
     print_term(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
-    # print(bst_sol, end="\n")
 
 
 def print_term(avg_obj, best_obj, imprv, time, best_sol, file_name):
@@ -188,13 +186,9 @@ def print_term(avg_obj, best_obj, imprv, time, best_sol, file_name):
     print("\n" * 2)
 
 
-def run_all(processor_nbr: int):
-    main_run(file_list[processor_nbr])
-
-
 if __name__ == '__main__':
     for x in range(len(file_list)):
-        run_all(x)
+        main_run(file_list[x])
     to_pandas()
 
 """if __name__ == '__main__':
