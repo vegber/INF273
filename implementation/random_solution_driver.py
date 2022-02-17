@@ -19,6 +19,7 @@ bst_solutions = []
 pd_problem_file = []
 
 
+# can be deleted
 def extract_values(filename: str) -> tuple:
     vals = [s for s in filename[:-4].split("_")]
     vals = [int(i) for i in vals if i.isdigit()]
@@ -35,7 +36,7 @@ def get_permutation(vehicle: int, call: int):
     available_calls = []
 
     available_calls.extend(range(1, call + 1))
-    cars = 3  # random.randint(0, vehicle)
+    cars = vehicle  # random.randint(0, vehicle)
 
     for car in range(cars):
         # find random calls for each car
@@ -76,7 +77,7 @@ def flatten(l):
 
 
 def get_init(vehicle: int, call: int):
-    return np.array([0] * vehicle + list(range(1, call+1)) * 2)
+    return np.array([0] * vehicle + list(range(1, call + 1)) * 2)
 
 
 def sort_tuple(best_sol_cost_pairs):
@@ -87,20 +88,22 @@ def avg_Cost(sorted_10_best_solutions):
     return sum(x[1] for x in sorted_10_best_solutions) / len(sorted_10_best_solutions)
 
 
-def calculate(problem: object, vehicle: int, call: int):
+def calculate(problem: object):  # , vehicle: int, call: int):
+    vehicle = problem['n_vehicles']
+    calls = problem['n_calls']
+
     times_ = []
     best_sol_cost_pairs = []
-
-    init_sol = get_init(vehicle, call)  # create initial worst solution
+    init_sol = get_init(vehicle, calls)  # create initial worst solution
     init_cost = cost_function(init_sol, problem)  # initial worst cost
 
     for rounds in range(10):
         current_lowest_cost = init_cost  # init max size
         solution_cost = []
         start_pr_iter = time.time()
-        for x in range(10000):  # 10 000 iterations
+        for it in range(10000):  # 10 000 iterations
 
-            curr_ = get_permutation(vehicle, call)  # get random permutation
+            curr_ = get_permutation(vehicle, calls)  # get random permutation
             feasible, error_code = feasibility_check(curr_, problem)  # Check if feasible sol
             if feasible:
                 x_cost = cost_function(curr_, problem)  # find cost
@@ -116,34 +119,28 @@ def calculate(problem: object, vehicle: int, call: int):
         sorted_solutions = sort_tuple(solution_cost)
         best_sol_cost_pairs.append(sorted_solutions[0])  # add the best solution of 10k'th round
 
-        # get_avg_min_cost(avg_score, init_cost, best_score, round_Costs)
-        # improv.append(100 * (init_cost - current_lowest_cost) / init_cost)
+    sorted_10_best_solutions = sort_tuple(best_sol_cost_pairs)  # sort 10 best
+    all_time_best_cost = np.round(sorted_10_best_solutions[0][1], 2)  # choose best elem
 
-    sorted_10_best_solutions = sort_tuple(best_sol_cost_pairs)
-    all_time_best_cost = np.round(sorted_10_best_solutions[0][1], 2)
-    improvement = np.round(100 * (init_cost - all_time_best_cost) / init_cost, 2)
-    avg_running_time = np.round(np.average(times_), 2)
-    avg_objective_cost = np.round(avg_Cost(sorted_10_best_solutions), 2)
-    best_solution_ = sorted_10_best_solutions[0][0]
+    improvement = np.round(100 * (init_cost - all_time_best_cost) / init_cost, 2)  # improvement as per doc.
+    avg_running_time = np.round(np.average(times_), 2)  # average running time
+
+    avg_objective_cost = np.round(avg_Cost(sorted_10_best_solutions), 2)  # average cost
+    best_solution_ = sorted_10_best_solutions[0][0]  # best sol - will be first elem
+
     return avg_objective_cost, all_time_best_cost, improvement, avg_running_time, best_solution_
 
 
-def store(avg, bst_cost, impr, time, bst_sol, pd_problem_file):
+def store(avg, bst_cost, impr, tme, bst_sol):
     avg_objs.append(avg), bst_costs.append(bst_cost), improvements.append(impr),
-    times.append(time), bst_solutions.append(bst_sol)
+    times.append(tme), bst_solutions.append(bst_sol)
 
 
 def format_bst_sols():
-    solutions_as_str = []
-    for sol in bst_solutions:
-        sol_str = ','.join(map(str, sol))
-
-        """for index_ in sol:
-            sol_str += str(index_)"""
-        solutions_as_str.append(sol_str)
-    return solutions_as_str
+    return [(','.join(map(str, s))) for s in bst_solutions]
 
 
+# todo
 def to_pandas():
     best_solution_secondtry = format_bst_sols()
     data = {
@@ -164,13 +161,11 @@ def to_pandas():
     file.close()
 
 
-def main_run(pd_problem_file: str):
-    call, vehicle = map(int, extract_values(pd_problem_file))
-    problem = load_problem(path + pd_problem_file)
-    print(call)
-    avg, bst_cost, impr, time, bst_sol = calculate(problem, vehicle, call)
-    store(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
-    print_term(avg, bst_cost, impr, time, bst_sol, pd_problem_file)
+def main_run(prob_file: str):
+    problem = load_problem(path + prob_file)
+    avg, bst_cost, improvement, tme, bst_sol = calculate(problem)  # , vehicle, call)
+    store(avg, bst_cost, improvement, tme, bst_sol) # store files
+    print_term(avg, bst_cost, improvement, tme, bst_sol, prob_file)
 
 
 def print_term(avg_obj, best_obj, imprv, time, best_sol, file_name):
