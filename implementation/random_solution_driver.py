@@ -1,3 +1,4 @@
+import multiprocessing as mp
 import os
 import random
 import time
@@ -164,7 +165,7 @@ def to_pandas():
 def main_run(prob_file: str):
     problem = load_problem(path + prob_file)
     avg, bst_cost, improvement, tme, bst_sol = calculate(problem)  # , vehicle, call)
-    store(avg, bst_cost, improvement, tme, bst_sol) # store files
+    store(avg, bst_cost, improvement, tme, bst_sol)  # store files
     print_term(avg, bst_cost, improvement, tme, bst_sol, prob_file)
 
 
@@ -181,12 +182,19 @@ def print_term(avg_obj, best_obj, imprv, time, best_sol, file_name):
     print("\n" * 2)
 
 
-if __name__ == '__main__':
+"""if __name__ == '__main__':
     for x in range(len(file_list)):
         main_run(file_list[x])
     to_pandas()
+    
+    """
 
-"""if __name__ == '__main__':
+
+def run_all(x):
+    main_run(file_list[x])
+
+
+if __name__ == '__main__':
     start_tot = time.time()
 
     cores = mp.cpu_count()
@@ -198,4 +206,3 @@ if __name__ == '__main__':
     stop_tot = time.time()
     print(f"Totall time was {stop_tot - start_tot}")
     pool.close()
-"""
