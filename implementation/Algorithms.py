@@ -16,13 +16,13 @@ class LocalSearch:
         self.calls = self.unpacked_problem['n_calls']
 
     def run(self, operator):  # define which operator to work on - higher order func.
-        init = operator(get_init(self.vehicle, self.calls))
+        init = operator(get_init(self.vehicle, self.calls), self.vehicle, self.calls)
 
         # set best solution
         best_solution = init # cost_function(init, self.unpacked_problem)
         best_sol_cost = cost_function(best_solution, self.unpacked_problem)
-        for x in range(10000):
-            new_sol = operator(best_solution)
+        for x in range(1):
+            new_sol = operator(best_solution, self.vehicle, self.calls)
             if feasibility_check(new_sol, self.unpacked_problem) and cost_function(new_sol, self.unpacked_problem) < best_sol_cost:
                 best_solution = new_sol
                 best_sol_cost = cost_function(best_solution)
