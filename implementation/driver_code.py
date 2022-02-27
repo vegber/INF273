@@ -78,16 +78,15 @@ def main_run(pd_problem_file: str):
     print_term(avg_cost_p_round, min_cost_p_round, improv, times_, pd_problem_file)
 
 
-def print_term(avg_cost_p_round, min_cost_p_round, improv, times_, file_name_str):
-    # print(f"| \t Average objective | \t Best Objective | \t Improvement | \t\t Running time |", end="\n")
-    print(f"Running {file_name_str}: ")
+def print_term(avg_obj, best_obj, imprv, time, file_name):
+    print(f"Running {file_name}: ")
     print("\t | \t %s \t | \t %s \t | \t %s \t | \t %s \t |".format() % (
         "Average objective", "Best Objective", "Improvement", "RunTime"))
     print("=" * 90)
-    for index in range(len(avg_cost_p_round)):
-        avg, best, impr, run = avg_cost_p_round[index], min_cost_p_round[index], improv[index], times_[index]
-        print("%4d | \t %10s \t\t | \t %10s \t\t | \t %10s \t | \t %10s  |".format() % (
-            index + 1, str(np.round(avg, 2)), str(round(best, 2)), str(round(impr, 2)), str(round(run, 2))), end="\n")
+    for index in range(len(avg_obj)):
+        avg, best, impr, run = avg_obj[index], best_obj[index], imprv[index], time[index]
+        print("%10s | \t %10s \t\t | \t %10s \t\t | \t %10s \t | \t %10s  |".format() % (
+            "Random strategy ", str(np.round(avg, 2)), str(round(best, 2)), str(round(impr, 2)), str(round(run, 2))), end="\n")
     print("\n" * 2)
 
 
