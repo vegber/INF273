@@ -27,6 +27,7 @@ class LocalSearch:
                 best_solution = new_sol
                 best_sol_cost = cost_function(best_solution)
 
+        print(best_solution)
         return best_solution
 
 
