@@ -32,7 +32,7 @@ def list_format(sol_vehicle_arr):
 
 
 def one_insert(arr, vehicle, calls, vessel_cargo):
-    sol_vehicle_arr = to_list(arr)
+    sol_vehicle_arr = to_list_v2(arr, vehicle)  # to_list(arr)
     random_vehicle = random.randint(0, vehicle)  # zero indexed
 
     outsource = False
@@ -94,7 +94,36 @@ def three_exchange(arr, vehicle, calls, prob):
 
 def to_list(arr):
     # [list(group) for key, group in groupby(L, lambda x: x == 0)]
+
     lst_string = "".join([str(x) for x in arr])
     lst2 = lst_string.split('0')
     lst3 = [list(y) for y in lst2]
-    return [list(map(int, z)) for z in lst3]
+    var = [list(map(int, z)) for z in lst3]
+    return var
+
+
+def to_list_v2(arr, vehicle):
+    out = [[] * x for x in range(vehicle + 1)]  # change six by vehicle +1
+    counter = 0
+
+    L = list(map(str, arr))
+    content = ""
+
+    for elem in range(len(L)):
+        if L[elem] == "0":
+            out[counter] = list(content.split())
+            content = ""
+            counter += 1
+        else:
+            content += L[elem] + ' '
+    out[counter] = list(content.split())
+
+    for outer in range(len(out)):
+        for inner in range(len(out[outer])):
+            if out[outer][inner] == '':
+                out.pop(outer)
+                out.insert(outer, [])
+            else:
+                out[outer][inner] = int(out[outer][inner])
+
+    return out

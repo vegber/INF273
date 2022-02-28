@@ -37,8 +37,8 @@ def one_insert(L, prob):
     var = (1, 2)
     print(bool(var))
     n_list = to_list2(L)
+    print(n_list)
     print(problem['VesselCargo'])
 
 
-print([x for x in range(1, 10)])
 one_insert(sol, prob=problem)
