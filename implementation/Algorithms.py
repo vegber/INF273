@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from random_solution_driver import get_init, get_permutation
+from random_solution_driver import get_init, get_permutation, sort_tuple, avg_Cost
 from utils_code.pdp_utils import *
 from operators import *
 from natsort import natsorted
@@ -17,6 +17,8 @@ class LocalSearch:
         self.vehicle = self.unpacked_problem['n_vehicles']
         self.calls = self.unpacked_problem['n_calls']
         self.vessel_cargo = self.unpacked_problem['VesselCargo']
+        self.top10best_solution = []  # store solution / cost
+        self.run_time = []
 
     def run(self, operator):  # define which operator to work on - higher order func.
         init = get_init(self.vehicle, self.calls).tolist()
@@ -24,25 +26,40 @@ class LocalSearch:
         best_solution = init  # cost_function(init, self.unpacked_problem)
         best_sol_cost = cost_function(best_solution, self.unpacked_problem)
         start = time.time()
-        for x in range(10000):
+        for it in range(10000):
             new_sol = operator(best_solution, self.vehicle, self.calls, self.vessel_cargo)
             feas, lim = feasibility_check(new_sol, self.unpacked_problem)
             if feas and cost_function(new_sol, self.unpacked_problem) < best_sol_cost:
                 best_solution = new_sol
                 best_sol_cost = cost_function(best_solution, self.unpacked_problem)
 
-        print(f"time was: {time.time() - start}")
-        # print(best_solution)
-        print(best_sol_cost)
+        self.run_time.append(time.time() - start)
 
-        # beat this motherfucker!
         # print(cost_function([4, 4, 7, 7, 0, 2, 2, 0, 1, 5, 5, 3, 3, 1, 0, 6, 6], self.unpacked_problem))
 
-        return best_solution
+        self.top10best_solution.append((best_solution, best_sol_cost))
+
+    def print_stats(self):
+        self.top10best_solution = sort_tuple(self.top10best_solution)  # sort values
+        avg_obj_cost = np.round(avg_Cost(self.top10best_solution), 2)
+        best_cost = self.top10best_solution[0][1]
+        init_cost = cost_function(get_init(self.vehicle, self.calls), self.unpacked_problem)
+        improvement = np.round(100 * (init_cost - self.top10best_solution[0][1]) / init_cost, 2)
+        avg_run_time = np.round(np.average(self.run_time), 2)
+        print("\t\t\t\t | \t %s \t | \t %s \t | \t %s| \t %s \t | \t".format() % (
+            "Average objective", "Best Objective", "Improvement (%) ", "RunTime"))
+        print("=" * 102)
+        print("%10s | \t %10s \t\t | \t %10s \t\t | \t %10s \t | \t %10s  | ".format() % (
+            "Local search (1ins) ", str(avg_obj_cost), str(best_cost), str(improvement),
+            str(avg_run_time)), end="\n")
+        print('Solution')
+        print(self.top10best_solution[0][0], end="\n")
 
 
 if __name__ == '__main__':
     file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
-    local_hero = LocalSearch(file_list[5])
-    for x in range(10):
-        print(local_hero.run(one_insert))
+    for i in range(6):
+        local_hero = LocalSearch(file_list[i])
+        for x in range(10):
+            local_hero.run(one_insert)
+        local_hero.print_stats()
