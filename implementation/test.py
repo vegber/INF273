@@ -9,7 +9,7 @@ path = '../utils_code/pdp_utils/data/pd_problem/Call_7_Vehicle_3.txt'
 
 problem = load_problem(path)
 init_ = get_init(problem['n_vehicles'], problem['n_calls'])
-sol = np.array([7, 7, 5, 5, 0, 2, 2, 0, 3, 4, 4, 3, 1, 1, 6,6, 0]) # 6,6
+sol = np.array([7, 7, 5, 5, 0, 2, 2, 0, 3, 4, 4, 3, 1, 1, 6, 6, 0])  # 6,6
 print(sol)
 
 
@@ -24,10 +24,21 @@ def to_list(L):
     return va
 
 
+def to_list2(L):
+    # [list(group) for key, group in groupby(L, lambda x: x == 0)]
+    lst_string = "".join([str(x) for x in L])
+    lst2 = lst_string.split('0')
+    lst3 = [list(y) for y in lst2]
+    return [list(map(int, z)) for z in lst3]
+
+
 def one_insert(L, prob):
     # L to n + 1 lists
-    var = feasibility_check(to_list(L), problem)
-    print(var)
+    var = (1, 2)
+    print(bool(var))
+    n_list = to_list2(L)
+    print(problem['VesselCargo'])
 
 
+print([x for x in range(1, 10)])
 one_insert(sol, prob=problem)
