@@ -1,12 +1,10 @@
+import os
 import time
 
-import numpy as np
-
-from random_solution_driver import get_init, get_permutation, sort_tuple, avg_Cost
-from utils_code.pdp_utils import *
-from operators import *
 from natsort import natsorted
-import os
+
+from operators import *
+from random_solution_driver import get_init, sort_tuple, avg_Cost
 
 path = '../utils_code/pdp_utils/data/pd_problem/'
 
@@ -46,12 +44,25 @@ class LocalSearch:
         init_cost = cost_function(get_init(self.vehicle, self.calls), self.unpacked_problem)
         improvement = np.round(100 * (init_cost - self.top10best_solution[0][1]) / init_cost, 2)
         avg_run_time = np.round(np.average(self.run_time), 2)
-        print("\t\t\t\t | \t %s \t | \t %s \t | \t %s| \t %s \t | \t".format() % (
-            "Average objective", "Best Objective", "Improvement (%) ", "RunTime"))
+
+        print("\t\t\t\t | \t %s \t | \t %s \t | \t %s| \t %s \t | \t"
+              .format() %
+              ("Average objective",
+               "Best Objective",
+               "Improvement (%) ",
+               "RunTime"))
+
         print("=" * 102)
-        print("%10s | \t %10s \t\t | \t %10s \t\t | \t %10s \t | \t %10s  | ".format() % (
-            "Local search (1ins) ", str(avg_obj_cost), str(best_cost), str(improvement),
-            str(avg_run_time)), end="\n")
+
+        print("%10s | \t %10s \t\t | \t %10s \t\t | \t %10s \t | \t %10s  | "
+              .format() %
+              ("Local search (1ins) ",
+               str(avg_obj_cost),
+               str(best_cost),
+               str(improvement),
+               str(avg_run_time)),
+              end="\n")
+
         print('Solution')
         print(self.top10best_solution[0][0], end="\n")
 

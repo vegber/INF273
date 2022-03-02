@@ -1,6 +1,5 @@
 import random
 from utils_code.pdp_utils import *
-
 import numpy as np
 
 
@@ -85,6 +84,7 @@ def find_valid_feasable_placements(vehicle, vessel_comp):
 
 
 def two_exchange(arr, vehicle, calls, prob):
+
     return arr
 
 
@@ -117,3 +117,4 @@ def to_list_v2(arr, vehicle):
                 out[outer][inner] = int(out[outer][inner])
 
     return out
+
