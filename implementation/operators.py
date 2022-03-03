@@ -62,6 +62,7 @@ def two_exchange(arr, vehicle, calls, vessel_cargo):
     second_valid_index = random.randint(0, len(arr) - 1)
     while second_valid_index == first_swap_index:
         second_valid_index = random.randint(0, len(arr) - 1)
+
     second_swap_value = arr[second_valid_index]
     if first_swap_value and second_swap_value != 0:
         # both values are not zero, we can do swap
