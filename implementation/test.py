@@ -3,6 +3,7 @@ import random
 from operators import find_valid_feasable_placements
 from random_solution_driver import get_init
 from utils_code.pdp_utils import *
+from operators import to_list_v2
 
 path = '../utils_code/pdp_utils/data/pd_problem/Call_7_Vehicle_3.txt'
 
@@ -50,13 +51,42 @@ def which_cars(arr, first_swap_index, second_valid_index):
     car_count = 0
     for x in range(len(arr)):
         if x == first_swap_index or x == second_valid_index:
-            print("yes")
             car_index.append(car_count)
         if arr[x] == 0:
             car_count += 1
     print(car_index)
-    print(f"indexes in car {car_index[0]} and {car_index[1]}")
+    print(f"indexes in car {car_index[0] + 1} and {car_index[1] + 1}")
     return car_index[0], car_index[1]
+
+
+def find_zero(first_swap_index, second_valid_index):
+    if first_swap_index == 0:
+        return first_swap_index
+    else:
+        return second_valid_index
+
+
+def find_zero_swaps(arr):
+    """
+    :returns exact index of possible sol. remember
+    to add +1 in your insert method.
+    :param arr:
+    :return:
+    """
+    backlog = []
+    valid_pos = []
+    for i, elem in enumerate(arr):
+        if elem == 0:
+            valid_pos.append(i)
+            continue
+        backlog.append(elem)
+        if backlog.count(elem) == 2:
+            backlog.remove(elem)
+            backlog.remove(elem)
+        if len(backlog) == 0:
+            valid_pos.append(i)
+
+    return valid_pos
 
 
 def two_swap(arr, vehicle, calls, prob):
@@ -76,8 +106,6 @@ def two_swap(arr, vehicle, calls, prob):
     print(first_swap_value)
     print(second_swap_value)
     print(f"before: {arr}")
-    first_swap_value = 0
-    second_swap_value = 0
     if first_swap_value and second_swap_value != 0:
         # both values are not zero, we can do swap
         pickup_first, deliver_first = get_index_1d(arr, first_swap_value)
@@ -85,15 +113,15 @@ def two_swap(arr, vehicle, calls, prob):
         arr = swap(arr, pickup_first, pickup_sec)
         arr = swap(arr, deliver_first, deliver_sec)
         print(f"after: {arr}")
-    if (first_swap_value and second_swap_value) == 0:
-        # todo
+    if first_swap_value == 0 and second_swap_value == 0:
         # swap cars
-        # find out car indexes, swap() --- use 2d arr
         car1, car2 = which_cars(arr, first_swap_index, second_valid_index)
-        pass
-    else:  # atleast one is zero
+        arr_2 = swap(arr_2, car1, car2)
+        arr = [y for x in arr_2 for y in x]
+    else:  # at least one is zero
+        zero_to_be_swapped_index = find_zero(first_swap_index, second_valid_index)  # swap this with a valid call
+        valid_indexes = find_zero_swaps(arr)
 
-        pass
     return arr
 
     # 0 0 0 0 0 0 0 0 1,1 0 , 2,2,
@@ -121,5 +149,6 @@ def swap(arr, l1, l2):
 
 if __name__ == '__main__':
     init = get_init(3, 7)
+    arr = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
 
-    print(two_swap(init, 3, 7, problem))
+    print(two_swap(arr, 3, 7, problem))
