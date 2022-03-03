@@ -37,7 +37,7 @@ class LocalSearch:
 
         self.top10best_solution.append((best_solution, best_sol_cost))
 
-    def print_stats(self):
+    def print_stats(self, operator_name=None):
         self.top10best_solution = sort_tuple(self.top10best_solution)  # sort values
         avg_obj_cost = np.round(avg_Cost(self.top10best_solution), 2)
         best_cost = self.top10best_solution[0][1]
@@ -56,7 +56,8 @@ class LocalSearch:
 
         print("%10s | \t %10s \t\t | \t %10s \t\t | \t %10s \t | \t %10s  | "
               .format() %
-              ("Local search (1ins) ",
+              (
+               operator_name,
                str(avg_obj_cost),
                str(best_cost),
                str(improvement),
@@ -72,5 +73,5 @@ if __name__ == '__main__':
     for i in range(6):
         local_hero = LocalSearch(file_list[i])
         for x in range(10):
-            local_hero.run(one_insert)
-        local_hero.print_stats()
+            local_hero.run(two_exchange)
+        local_hero.print_stats("Two insert babyy") # Local search (1ins)

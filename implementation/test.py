@@ -54,13 +54,11 @@ def which_cars(arr, first_swap_index, second_valid_index):
             car_index.append(car_count)
         if arr[x] == 0:
             car_count += 1
-    print(car_index)
-    print(f"indexes in car {car_index[0] + 1} and {car_index[1] + 1}")
     return car_index[0], car_index[1]
 
 
-def find_zero(first_swap_index, second_valid_index):
-    if first_swap_index == 0:
+def find_zero(arr, first_swap_index, second_valid_index):
+    if arr[first_swap_index] == 0:
         return first_swap_index
     else:
         return second_valid_index
@@ -101,26 +99,30 @@ def two_swap(arr, vehicle, calls, prob):
     second_valid_index = random.randint(0, len(arr) - 1)
     while second_valid_index == first_swap_index:
         second_valid_index = random.randint(0, len(arr) - 1)
-
     second_swap_value = arr[second_valid_index]
-    print(first_swap_value)
-    print(second_swap_value)
-    print(f"before: {arr}")
     if first_swap_value and second_swap_value != 0:
+        print("1" * 120)
         # both values are not zero, we can do swap
         pickup_first, deliver_first = get_index_1d(arr, first_swap_value)
         pickup_sec, deliver_sec = get_index_1d(arr, second_swap_value)
         arr = swap(arr, pickup_first, pickup_sec)
         arr = swap(arr, deliver_first, deliver_sec)
-        print(f"after: {arr}")
-    if first_swap_value == 0 and second_swap_value == 0:
+
+    elif first_swap_value == 0 and second_swap_value == 0:
+        print("=" * 120)
         # swap cars
         car1, car2 = which_cars(arr, first_swap_index, second_valid_index)
         arr_2 = swap(arr_2, car1, car2)
         arr = [y for x in arr_2 for y in x]
-    else:  # at least one is zero
-        zero_to_be_swapped_index = find_zero(first_swap_index, second_valid_index)  # swap this with a valid call
-        valid_indexes = find_zero_swaps(arr)
+
+    elif first_swap_value == 0 or second_swap_value == 0:  # at least one is zero'
+        print("3" * 120)
+        zero_to_be_swapped_index = find_zero(arr, first_swap_index, second_valid_index)  # find out which one is zero
+        valid_indexes = find_zero_swaps(arr)  # returns a list of possible insertions
+        arr.pop(zero_to_be_swapped_index)
+        print(arr)
+        random_choice_index = random.choice(valid_indexes)
+        arr.insert(random_choice_index + 1, 0)
 
     return arr
 
@@ -148,7 +150,11 @@ def swap(arr, l1, l2):
 
 
 if __name__ == '__main__':
-    init = get_init(3, 7)
+    init = get_init(5, 18).tolist()
     arr = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
 
-    print(two_swap(arr, 3, 7, problem))
+    for x in range(100):
+        out = (two_swap(init, 3, 7, problem))
+        one, two = feasibility_check(out, problem)
+
+        print(one)

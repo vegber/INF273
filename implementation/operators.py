@@ -3,33 +3,6 @@ from utils_code.pdp_utils import *
 import numpy as np
 
 
-def find_indexes(sol_vehicle_arr, random_call):
-    indexes = 0
-    vehicle = 0
-    for x in range(len(sol_vehicle_arr)):
-        var = tuple(i for i, e in enumerate(sol_vehicle_arr[x]) if e == random_call)
-        if var:
-            vehicle = x  # vehicle is not zero index
-            indexes = var
-    return vehicle, indexes[0], indexes[1]
-
-
-def list_format(sol_vehicle_arr):
-    arr = []
-    for x in sol_vehicle_arr:
-        if not x:
-            arr.append(0)
-        else:
-            for elem in x:
-                arr.append(elem)
-            arr.append(0)
-
-    # edge case
-    if arr[-1] == 0:
-        arr.pop()
-    return arr
-
-
 def one_insert(arr, vehicle, calls, vessel_cargo):
     sol_vehicle_arr = to_list_v2(arr, vehicle)
     random_vehicle = random.randint(0, vehicle)  # zero indexed
@@ -79,13 +52,90 @@ def one_insert(arr, vehicle, calls, vessel_cargo):
     return arr
 
 
-def find_valid_feasable_placements(vehicle, vessel_comp):
-    return [i for i, e in enumerate(vessel_comp[vehicle], 1) if e == 1.]
+def two_exchange(arr, vehicle, calls, vessel_cargo):
+    arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))  # can have in case I need it
 
+    first_swap_index = random.randint(0, len(arr) - 1)
+    first_swap_value = arr[first_swap_index]
 
-def two_exchange(arr, vehicle, calls, prob):
+    # so now, this value can be swapped with all calls except zero
+    second_valid_index = random.randint(0, len(arr) - 1)
+    while second_valid_index == first_swap_index:
+        second_valid_index = random.randint(0, len(arr) - 1)
+    second_swap_value = arr[second_valid_index]
+    if first_swap_value and second_swap_value != 0:
+        # both values are not zero, we can do swap
+        pickup_first, deliver_first = get_index_1d(arr, first_swap_value)
+        pickup_sec, deliver_sec = get_index_1d(arr, second_swap_value)
+        arr = swap(arr, pickup_first, pickup_sec)
+        arr = swap(arr, deliver_first, deliver_sec)
+
+    elif first_swap_value == 0 and second_swap_value == 0:
+        # swap cars
+        car1, car2 = which_cars(arr, first_swap_index, second_valid_index)
+        arr_2 = swap(arr_2, car1, car2)
+        arr = [y for x in arr_2 for y in x]
+
+    elif first_swap_value == 0 or second_swap_value == 0:  # at least one is zero'
+        zero_to_be_swapped_index = find_zero(arr, first_swap_index, second_valid_index)  # find out which one is zero
+        valid_indexes = find_zero_swaps(arr)  # returns a list of possible insertions
+        arr.pop(zero_to_be_swapped_index)
+        random_choice_index = random.choice(valid_indexes)
+        arr.insert(random_choice_index + 1, 0)
 
     return arr
+
+
+def get_index_1d(arr, first_swap_value):
+    var = [i for i, e in enumerate(arr) if e == first_swap_value]
+    # should always be two
+    return var[0], var[1]
+
+
+def swap(arr, l1, l2):
+    arr[l1], arr[l2] = arr[l2], arr[l1]
+    return arr
+
+
+def which_cars(arr, first_swap_index, second_valid_index):
+    car_index = []
+    car_count = 0
+    for x in range(len(arr)):
+        if x == first_swap_index or x == second_valid_index:
+            car_index.append(car_count)
+        if arr[x] == 0:
+            car_count += 1
+    return car_index[0], car_index[1]
+
+
+def find_zero(arr, first_swap_index, second_valid_index):
+    if arr[first_swap_index] == 0:
+        return first_swap_index
+    else:
+        return second_valid_index
+
+
+def find_zero_swaps(arr):
+    """
+    :returns exact index of possible sol. remember
+    to add +1 in your insert method.
+    :param arr:
+    :return:
+    """
+    backlog = []
+    valid_pos = []
+    for i, elem in enumerate(arr):
+        if elem == 0:
+            valid_pos.append(i)
+            continue
+        backlog.append(elem)
+        if backlog.count(elem) == 2:
+            backlog.remove(elem)
+            backlog.remove(elem)
+        if len(backlog) == 0:
+            valid_pos.append(i)
+
+    return valid_pos
 
 
 def three_exchange(arr, vehicle, calls, prob):
@@ -118,3 +168,48 @@ def to_list_v2(arr, vehicle):
 
     return out
 
+
+def find_valid_feasable_placements(vehicle, vessel_comp):
+    return [i for i, e in enumerate(vessel_comp[vehicle], 1) if e == 1.]
+
+
+def feasable_placements_with_outsorce(calls, vehicle, vessel_cargo):
+    vehicle_valid_calls = [find_valid_feasable_placements(x, vessel_cargo) for x in range(vehicle)]
+    outsorcevehicle = [x for x in range(1, calls + 1)]
+    vehicle_valid_calls.append(outsorcevehicle)
+    return vehicle_valid_calls
+
+
+def fill_2d_zero(two_dim):
+    for x in range(len(two_dim)):
+        if not two_dim[x]:
+            two_dim[x].append(0)
+
+    return two_dim
+
+
+def find_indexes(sol_vehicle_arr, random_call):
+    indexes = 0
+    vehicle = 0
+    for x in range(len(sol_vehicle_arr)):
+        var = tuple(i for i, e in enumerate(sol_vehicle_arr[x]) if e == random_call)
+        if var:
+            vehicle = x  # vehicle is not zero index
+            indexes = var
+    return vehicle, indexes[0], indexes[1]
+
+
+def list_format(sol_vehicle_arr):
+    arr = []
+    for x in sol_vehicle_arr:
+        if not x:
+            arr.append(0)
+        else:
+            for elem in x:
+                arr.append(elem)
+            arr.append(0)
+
+    # edge case
+    if arr[-1] == 0:
+        arr.pop()
+    return arr
