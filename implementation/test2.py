@@ -23,8 +23,11 @@ def zeros(arr):
     return valid_pos
 
 
-valid = zeros(arr)
-print(valid)
-print(arr)
-arr.insert(valid[0], 9)
-print(arr)
+def tst():
+    for x in range(10):
+        if x == 99:
+            return x
+
+
+y = tst()
+print(y)

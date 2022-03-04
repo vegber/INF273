@@ -3,7 +3,6 @@ import random
 from operators import find_valid_feasable_placements
 from random_solution_driver import get_init
 from utils_code.pdp_utils import *
-from operators import to_list_v2
 
 path = '../utils_code/pdp_utils/data/pd_problem/Call_7_Vehicle_3.txt'
 
@@ -66,9 +65,9 @@ def find_zero(arr, first_swap_index, second_valid_index):
 
 def find_zero_swaps(arr):
     """
-    :returns exact index of possible sol. remember
+    returns exact index of possible sol. remember
     to add +1 in your insert method.
-    :param arr:
+    param arr
     :return:
     """
     backlog = []
@@ -151,10 +150,46 @@ def swap(arr, l1, l2):
     return arr
 
 
-if __name__ == '__main__':
-    init = get_init(5, 18).tolist()
-    arr = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
+def get_zero_indexes(arr):
+    return [i for i, e in enumerate(arr) if e == 0]
 
-    out = (two_swap(init, 3, 7, problem))
-    one, two = feasibility_check(out, problem)
-    print(one)
+
+def two_swap_v2(arr, vehicle, calls, vessel_cargo):
+    legal_zero_swap = find_zero_swaps(arr)
+    swapped_zero = 0
+    cycles = extract_good_zero_swaps(arr, legal_zero_swap)
+    zero_index = get_zero_indexes(arr)
+
+    if len(cycles) == 0:  # there is nowhere to place a zero - we have no cycles
+        # we should swap elements within vehicle
+        # swap two
+        for x in range(2):
+            one_p, one_d = get_index_1d(arr, random.randint(1, calls))
+            swap_with = random.randint(1, calls)
+            while swap_with == arr[one_p]:
+                swap_with = random.randint(1, calls)
+            two_p, two_d = get_index_1d(arr, swap_with)
+            arr = swap(arr, one_p, two_p)
+            arr = swap(arr, one_d, two_d)
+
+    else:  # swap / insert zero
+        to_insert = random.choice(cycles) + 1
+        arr.pop(random.choice(zero_index))
+        arr.insert(to_insert, 0)
+    return arr
+
+
+def extract_good_zero_swaps(arr, legal_zero_swap):
+    return [x for x in legal_zero_swap if arr[x] != 0 and x != (len(arr) - 1)]
+
+
+if __name__ == '__main__':
+    init = get_init(3, 7).tolist()
+    arr = [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
+
+    out = two_swap_v2(init, 3, 7, problem)
+    for x in range(10000):
+        out = two_swap_v2(out, 3, 7, problem)
+
+    print(out)
+    #    one, two = feasibility_check(out, problem)
