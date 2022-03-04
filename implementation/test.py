@@ -89,6 +89,7 @@ def find_zero_swaps(arr):
 
 def two_swap(arr, vehicle, calls, prob):
     vessel_cargo = problem['VesselCargo']
+
     vehicle_valid_calls = feasable_placements_with_outsorce(calls, vehicle, vessel_cargo)
     arr_2 = fill_2d_zero(to_list2(arr))  # can have in case I need it
 
@@ -100,6 +101,7 @@ def two_swap(arr, vehicle, calls, prob):
     while second_valid_index == first_swap_index:
         second_valid_index = random.randint(0, len(arr) - 1)
     second_swap_value = arr[second_valid_index]
+
     if first_swap_value and second_swap_value != 0:
         print("1" * 120)
         # both values are not zero, we can do swap
@@ -153,8 +155,6 @@ if __name__ == '__main__':
     init = get_init(5, 18).tolist()
     arr = [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
 
-    for x in range(100):
-        out = (two_swap(init, 3, 7, problem))
-        one, two = feasibility_check(out, problem)
-
-        print(one)
+    out = (two_swap(init, 3, 7, problem))
+    one, two = feasibility_check(out, problem)
+    print(one)
