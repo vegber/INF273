@@ -134,6 +134,8 @@ def fill_2d_zero(two_dim):
     for x in range(len(two_dim)):
         if not two_dim[x]:
             two_dim[x].append(0)
+        elif x != len(two_dim) - 1:
+            two_dim[x].append(0)
 
     return two_dim
 
@@ -160,10 +162,11 @@ def two_swap_v2(arr, vehicle, calls, vessel_cargo):
     zero_index = get_zero_indexes(arr)
     delta = random.randint(0, 10)
 
-    if len(cycles) == 0:  # there is nowhere to place a zero - we have no cycles
-        # we should swap elements within vehicle
-        # swap two
-        for x in range(2):
+    for x in range(2):
+        if len(cycles) == 0:  # there is nowhere to place a zero - we have no cycles
+            # we should swap elements within vehicle
+            # swap two
+            print(arr)
             arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
             vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
             vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
@@ -173,10 +176,43 @@ def two_swap_v2(arr, vehicle, calls, vessel_cargo):
 
             arr = [y for x in arr_2 for y in x]
 
-    else:  # swap / insert zero
-        to_insert = random.choice(cycles) + 1
-        arr.pop(random.choice(zero_index))
-        arr.insert(to_insert, 0)
+        else:  # swap / insert zero
+            to_insert = random.choice(cycles) + 1
+            print(to_insert)
+            arr.pop(random.choice(zero_index))
+            arr.insert(to_insert, 0)
+    return arr
+
+
+def two_swap_v3(arr, vehicle, calls, vessel_cargo):
+    arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
+    vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
+    vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
+
+    for i in range(2):
+        legal_zero_swap = find_zero_swaps(arr_2[vehicle_most_call])
+        cycles = extract_good_zero_swaps(arr_2[vehicle_most_call], legal_zero_swap)
+
+        # if cycles i none, then continue to swap elements
+        if len(cycles) == 0:
+            arr_2[vehicle_most_call] = swap(arr_2[vehicle_most_call],
+                                            random.choice(arr_2[vehicle_most_call]),
+                                            random.choice(arr_2[vehicle_most_call])
+                                            )
+            arr = [y for x in arr_2 for y in x]
+
+        else:
+            cycle = arr_2[vehicle_most_call][:cycles[-1] + 1]
+            random_car = random.randint(0, vehicle)
+            while random_car == vehicle_most_call:
+                random_car = random.randint(0, vehicle)
+
+            for call in cycle:
+                arr_2[random_car].insert(0, call)
+
+            arr_2[vehicle_most_call] = arr_2[vehicle_most_call][len(cycle):]
+            arr = [y for x in arr_2 for y in x]
+
     return arr
 
 
@@ -187,10 +223,9 @@ def extract_good_zero_swaps(arr, legal_zero_swap):
 if __name__ == '__main__':
     init = get_init(3, 7).tolist()
     arr = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
-
-    out = two_swap_v2(init, 3, 7, problem)
+    out = two_swap_v3(init, 3, 7, problem)
     for x in range(100000):
-        out = two_swap_v2(out, 3, 7, problem)
+        out = two_swap_v3(out, 3, 7, problem)
 
     print(out)
     #    one, two = feasibility_check(out, problem)

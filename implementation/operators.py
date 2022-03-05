@@ -53,38 +53,36 @@ def one_insert(arr, vehicle, calls, vessel_cargo):
 
 
 def two_exchange(arr, vehicle, calls, vessel_cargo):
-    arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))  # can have in case I need it
+    arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
+    vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
+    vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
 
-    first_swap_index = random.randint(0, len(arr) - 1)
-    first_swap_value = arr[first_swap_index]
+    for i in range(2):
+        legal_zero_swap = find_zero_swaps(arr_2[vehicle_most_call])
+        cycles = extract_good_zero_swaps(arr_2[vehicle_most_call], legal_zero_swap)
 
-    # so now, this value can be swapped with all calls except zero
-    second_valid_index = random.randint(0, len(arr) - 1)
-    while second_valid_index == first_swap_index:
-        second_valid_index = random.randint(0, len(arr) - 1)
+        # if cycles i none, then continue to swap elements
+        if len(cycles) == 0:
+            arr_2[vehicle_most_call] = swap(arr_2[vehicle_most_call],
+                                            random.choice(arr_2[vehicle_most_call]),
+                                            random.choice(arr_2[vehicle_most_call])
+                                            )
+            arr = [y for x in arr_2 for y in x]
 
-    second_swap_value = arr[second_valid_index]
-    if first_swap_value and second_swap_value != 0:
-        # both values are not zero, we can do swap
-        pickup_first, deliver_first = get_index_1d(arr, first_swap_value)
-        pickup_sec, deliver_sec = get_index_1d(arr, second_swap_value)
-        arr = swap(arr, pickup_first, pickup_sec)
-        arr = swap(arr, deliver_first, deliver_sec)
+        else:
+            cycle = arr_2[vehicle_most_call][:cycles[-1] + 1]
+            random_car = random.randint(0, vehicle)
+            while random_car == vehicle_most_call:
+                random_car = random.randint(0, vehicle)
 
-    elif first_swap_value == 0 and second_swap_value == 0:
-        # swap cars
-        car1, car2 = which_cars(arr, first_swap_index, second_valid_index)
-        arr_2 = swap(arr_2, car1, car2)
-        arr = [y for x in arr_2 for y in x]
+            for call in cycle:
+                arr_2[random_car].insert(0, call)
 
-    elif first_swap_value == 0 or second_swap_value == 0:  # at least one is zero'
-        zero_to_be_swapped_index = find_zero(arr, first_swap_index, second_valid_index)  # find out which one is zero
-        valid_indexes = find_zero_swaps(arr)  # returns a list of possible insertions
-        arr.pop(zero_to_be_swapped_index)
-        random_choice_index = random.choice(valid_indexes)
-        arr.insert(random_choice_index + 1, 0)
+            arr_2[vehicle_most_call] = arr_2[vehicle_most_call][len(cycle):]
+            arr = [y for x in arr_2 for y in x]
 
     return arr
+
 
 
 def get_index_1d(arr, first_swap_value):
@@ -214,3 +212,7 @@ def list_format(sol_vehicle_arr):
     if arr[-1] == 0:
         arr.pop()
     return arr
+
+
+def extract_good_zero_swaps(arr, legal_zero_swap):
+    return [x for x in legal_zero_swap if arr[x] != 0 and x != (len(arr) - 1)]
