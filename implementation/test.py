@@ -1,6 +1,6 @@
 import random
 
-from operators import find_valid_feasable_placements
+from operators import find_valid_feasable_placements, to_list_v2
 from random_solution_driver import get_init
 from utils_code.pdp_utils import *
 
@@ -156,21 +156,22 @@ def get_zero_indexes(arr):
 
 def two_swap_v2(arr, vehicle, calls, vessel_cargo):
     legal_zero_swap = find_zero_swaps(arr)
-    swapped_zero = 0
     cycles = extract_good_zero_swaps(arr, legal_zero_swap)
     zero_index = get_zero_indexes(arr)
+    delta = random.randint(0, 10)
 
     if len(cycles) == 0:  # there is nowhere to place a zero - we have no cycles
         # we should swap elements within vehicle
         # swap two
         for x in range(2):
-            one_p, one_d = get_index_1d(arr, random.randint(1, calls))
-            swap_with = random.randint(1, calls)
-            while swap_with == arr[one_p]:
-                swap_with = random.randint(1, calls)
-            two_p, two_d = get_index_1d(arr, swap_with)
-            arr = swap(arr, one_p, two_p)
-            arr = swap(arr, one_d, two_d)
+            arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
+            vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
+            vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
+            arr_2[vehicle_most_call] = swap(arr_2[vehicle_most_call],
+                                            random.choice(arr_2[vehicle_most_call]),
+                                            random.choice(arr_2[vehicle_most_call]))
+
+            arr = [y for x in arr_2 for y in x]
 
     else:  # swap / insert zero
         to_insert = random.choice(cycles) + 1
@@ -185,10 +186,10 @@ def extract_good_zero_swaps(arr, legal_zero_swap):
 
 if __name__ == '__main__':
     init = get_init(3, 7).tolist()
-    arr = [0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
+    arr = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
 
     out = two_swap_v2(init, 3, 7, problem)
-    for x in range(10000):
+    for x in range(100000):
         out = two_swap_v2(out, 3, 7, problem)
 
     print(out)
