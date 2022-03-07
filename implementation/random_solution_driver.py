@@ -11,6 +11,7 @@ from pretty_html_table import build_table
 from utils_code.pdp_utils import *
 
 path = '../utils_code/pdp_utils/data/pd_problem/'
+
 file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
 avg_objs = []
 bst_costs = []
@@ -78,7 +79,12 @@ def flatten(l):
 
 
 def get_init(vehicle: int, call: int):
-    return np.array([0] * vehicle + list(range(1, call + 1)) * 2)
+    init = [0] * vehicle
+    for i in range(1, call + 1):
+        init.append(i)
+        init.append(i)
+    return init
+    # return np.array([0] * vehicle + list(range(1, call + 1)) * 2)
 
 
 def sort_tuple(best_sol_cost_pairs):

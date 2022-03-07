@@ -184,12 +184,16 @@ def two_swap_v2(arr, vehicle, calls, vessel_cargo):
     return arr
 
 
+def valid_car(elem, calls, vehicles, vessel_cargo):
+    var = (feasable_placements_with_outsorce(calls, vehicles, vessel_cargo))
+
+
 def two_swap_v3(arr, vehicle, calls, vessel_cargo):
     arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
-    vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
-    vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
 
     for i in range(2):
+        vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
+        vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
         legal_zero_swap = find_zero_swaps(arr_2[vehicle_most_call])
         cycles = extract_good_zero_swaps(arr_2[vehicle_most_call], legal_zero_swap)
 
@@ -203,7 +207,10 @@ def two_swap_v3(arr, vehicle, calls, vessel_cargo):
 
         else:
             cycle = arr_2[vehicle_most_call][:cycles[-1] + 1]
+            cycle = cycle[0: random.randrange(0, len(cycle), 2)]
+
             random_car = random.randint(0, vehicle)
+            # random_car = valid_car(random.choice(cycle), calls, vehicle, vessel_cargo)
             while random_car == vehicle_most_call:
                 random_car = random.randint(0, vehicle)
 
@@ -217,15 +224,18 @@ def two_swap_v3(arr, vehicle, calls, vessel_cargo):
 
 
 def extract_good_zero_swaps(arr, legal_zero_swap):
-    return [x for x in legal_zero_swap if arr[x] != 0 and x != (len(arr) - 1)]
+    return [x for x in legal_zero_swap if arr[x] != 0]  # and x != (len(arr) - 1)]
 
 
 if __name__ == '__main__':
-    init = get_init(3, 7).tolist()
-    arr = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
+    init = get_init(3, 7)
+    # init = [1, 1, 0, 0, 0, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
+
+    print(init)
     out = two_swap_v3(init, 3, 7, problem)
-    for x in range(100000):
+    for x in range(10000):
         out = two_swap_v3(out, 3, 7, problem)
 
     print(out)
+    # print(out)
     #    one, two = feasibility_check(out, problem)

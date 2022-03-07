@@ -54,10 +54,10 @@ def one_insert(arr, vehicle, calls, vessel_cargo):
 
 def two_exchange(arr, vehicle, calls, vessel_cargo):
     arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
-    vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
-    vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
 
     for i in range(2):
+        vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
+        vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
         legal_zero_swap = find_zero_swaps(arr_2[vehicle_most_call])
         cycles = extract_good_zero_swaps(arr_2[vehicle_most_call], legal_zero_swap)
 
@@ -71,6 +71,8 @@ def two_exchange(arr, vehicle, calls, vessel_cargo):
 
         else:
             cycle = arr_2[vehicle_most_call][:cycles[-1] + 1]
+            cycle = cycle[0: random.randrange(0, len(cycle), 2)]
+
             random_car = random.randint(0, vehicle)
             while random_car == vehicle_most_call:
                 random_car = random.randint(0, vehicle)
@@ -82,7 +84,6 @@ def two_exchange(arr, vehicle, calls, vessel_cargo):
             arr = [y for x in arr_2 for y in x]
 
     return arr
-
 
 
 def get_index_1d(arr, first_swap_value):
