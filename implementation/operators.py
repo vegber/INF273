@@ -71,7 +71,7 @@ def two_exchange(arr, vehicle, calls, vessel_cargo):
 
         else:
             cycle = arr_2[vehicle_most_call][:cycles[-1] + 1]
-            cycle = cycle[0: random.randrange(0, len(cycle), 2)]
+            cycle = cycle[0: 2]# random.randrange(0, len(cycle), 2)]
 
             random_car = random.randint(0, vehicle)
             while random_car == vehicle_most_call:

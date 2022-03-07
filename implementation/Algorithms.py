@@ -28,7 +28,7 @@ class Algorithms:
         start = time.time()
         for it in range(10000):
             new_sol = operator(best_solution, self.vehicle, self.calls, self.vessel_cargo)
-            feas, lim = feasibility_check(new_sol, self.problem)
+            feas, _ = feasibility_check(new_sol, self.problem)
             if feas and cost_function(new_sol, self.problem) < best_sol_cost:
                 best_solution = new_sol
                 best_sol_cost = cost_function(best_solution, self.problem)
