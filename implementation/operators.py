@@ -53,9 +53,16 @@ def one_insert(arr, vehicle, calls, vessel_cargo):
 
 
 def two_exchange(arr, vehicle, calls, vessel_cargo):
-    arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
+    return swap_op(arr, vehicle, vessel_cargo, 2)
 
-    for i in range(2):
+
+def three_exchange(arr, vehicle, calls, vessel_cargo):
+    return swap_op(arr, vehicle, vessel_cargo, 3)
+
+
+def swap_op(arr, vehicle, vessel_cargo, swap_count):
+    arr_2 = fill_2d_zero(to_list_v2(arr, vehicle))
+    for i in range(swap_count):
         vehicle_most_call = ([len(arr_2[i]) for i in range(len(arr_2))])
         vehicle_most_call = vehicle_most_call.index(max(vehicle_most_call))
         legal_zero_swap = find_zero_swaps(arr_2[vehicle_most_call])
@@ -71,9 +78,17 @@ def two_exchange(arr, vehicle, calls, vessel_cargo):
 
         else:
             cycle = arr_2[vehicle_most_call][:cycles[-1] + 1]
-            cycle = cycle[0: 2]# random.randrange(0, len(cycle), 2)]
+            cycle = cycle[0: 2]  # random.randrange(0, len(cycle), 2)]
+            call = cycle[0]
 
-            random_car = random.randint(0, vehicle)
+            valid_cars = []
+            for x in range(vehicle):
+                curr = find_valid_feasable_placements(x, vessel_cargo)
+                if call in curr:
+                    valid_cars.append(x)
+
+            random_car = random.choice(valid_cars)
+
             while random_car == vehicle_most_call:
                 random_car = random.randint(0, vehicle)
 
@@ -82,7 +97,6 @@ def two_exchange(arr, vehicle, calls, vessel_cargo):
 
             arr_2[vehicle_most_call] = arr_2[vehicle_most_call][len(cycle):]
             arr = [y for x in arr_2 for y in x]
-
     return arr
 
 
@@ -138,10 +152,6 @@ def find_zero_swaps(arr):
     return valid_pos
 
 
-def three_exchange(arr, vehicle, calls, prob):
-    return arr
-
-
 def to_list_v2(arr, vehicle):
     out = [[] * x for x in range(vehicle + 1)]  # change six by vehicle +1
     counter = 0
@@ -183,6 +193,8 @@ def feasable_placements_with_outsorce(calls, vehicle, vessel_cargo):
 def fill_2d_zero(two_dim):
     for x in range(len(two_dim)):
         if not two_dim[x]:
+            two_dim[x].append(0)
+        elif x != len(two_dim) - 1:
             two_dim[x].append(0)
 
     return two_dim
