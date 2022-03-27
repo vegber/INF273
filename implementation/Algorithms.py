@@ -24,6 +24,9 @@ class Algorithms:
         self.top10best_solution = []  # store solution / cost
         self.run_time = []
 
+    def loaded_problem(self):
+        return self.problem
+
     def local_search(self, operator):  # define which operator to work on - higher order func.
         init = get_init(self.vehicle, self.calls)
         # set best solution
@@ -31,7 +34,7 @@ class Algorithms:
         best_sol_cost = cost_function(best_solution, self.problem)
         start = time.time()
         for it in range(10000):
-            new_sol = operator(best_solution, self.vehicle, self.calls, self.vessel_cargo)
+            new_sol = operator(best_solution)
             passed, _ = feasibility_check(new_sol, self.problem)
             if passed and cost_function(new_sol, self.problem) < best_sol_cost:
                 best_solution = new_sol
@@ -49,29 +52,31 @@ class Algorithms:
         incumbent = s_0
         best_solution = s_0
         delta_W = []
-
+        print(f"length of delat w is {len(delta_W)}")
         start = time.time()
-        for w in range(8000):
-            new_sol = operator(best_solution, self.vehicle, self.calls, self.vessel_cargo)
-            delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
+        while len(delta_W) == 0:
+            for w in range(100):
+                new_sol = operator(best_solution)
+                delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
 
-            passed, cause = feasibility_check(new_sol, self.problem)
-            if passed and delta_E < 0:
-                incumbent = new_sol
-                if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
-                    best_solution = incumbent
-            elif passed:
-                if random.random() < 0.8:
+                passed, cause = feasibility_check(new_sol, self.problem)
+                if passed and delta_E < 0:
                     incumbent = new_sol
-                delta_W.append(delta_E)
+                    if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
+                        best_solution = incumbent
+                elif passed:
+                    if random.random() < 0.8:
+                        incumbent = new_sol
+                    delta_W.append(delta_E)
+        print(f"length of delat w is {len(delta_W)}")
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0,
                    1 / -9900)
         T = T_0
 
-        for e in range(1, 9000):
-            new_sol = operator(incumbent, self.vehicle, self.calls, self.vessel_cargo)
+        for e in range(1, 9900):
+            new_sol = operator(incumbent)
             delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
 
             feas, _ = feasibility_check(new_sol, self.problem)
@@ -123,26 +128,34 @@ class Algorithms:
 
 
 def run_all(i):
+    """
+    Method used when running multithreading
+    :ignore else
+    :param i:
+    :return:
+    """
     m = Algorithms(file_list[i])
-    for i in range(10):
-        m.sa(three_exchange)
-    m.print_stats("Three Swap (SA): ")
+
+    for i in range(6):
+        m.sa(Operators.one_insert)
+    m.print_stats("One insert (SA): ")
 
 
 if __name__ == '__main__':
-    """
     myday = Algorithms(file_list[1])
-    myday.sa(two_exchange)
-    myday.print_stats("Two swap: ")
-    
-    """
-    """
+    operator = Operators(myday.problem)
+    myday.sa(operator.one_insert)
+    myday.print_stats("One Insert: ")
+
+    """    
     for i in range(6):
         local_hero = Algorithms(file_list[i])
         for x in range(10):
             local_hero.sa(three_exchange)
         local_hero.print_stats("Three Swap (SA): ")  # Local search (1ins)
     """
+    """    
     pool = mp.Pool(processes=6)
 
     pool.map(run_all, range(0, 6))
+    """
