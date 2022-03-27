@@ -52,7 +52,7 @@ class Algorithms:
         incumbent = s_0
         best_solution = s_0
         delta_W = []
-        print(f"length of delat w is {len(delta_W)}")
+        print(f"length of delta w is {len(delta_W)}")
         start = time.time()
         while len(delta_W) == 0:
             for w in range(100):
@@ -68,7 +68,7 @@ class Algorithms:
                     if random.random() < 0.8:
                         incumbent = new_sol
                     delta_W.append(delta_E)
-        print(f"length of delat w is {len(delta_W)}")
+        print(f"length of delta w is {len(delta_W)}")
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0,
@@ -136,15 +136,15 @@ def run_all(i):
     """
     m = Algorithms(file_list[i])
 
-    for i in range(6):
+    for i in range(10):
         m.sa(Operators.one_insert)
     m.print_stats("One insert (SA): ")
 
 
 if __name__ == '__main__':
     myday = Algorithms(file_list[1])
-    operator = Operators(myday.problem)
-    myday.sa(operator.one_insert)
+    op = Operators(myday.problem)
+    myday.sa(op.one_insert)
     myday.print_stats("One Insert: ")
 
     """    

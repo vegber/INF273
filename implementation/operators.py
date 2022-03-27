@@ -112,7 +112,7 @@ class Operators:
             outsource = True
 
         if not outsource:
-            valid_placements = self.find_valid_feasable_placements(random_vehicle)
+            valid_placements = self.find_valid_feasible_placements(random_vehicle)
         else:
             valid_placements = [x for x in range(1, self.calls + 1)]  # outsource can take all calls
 
@@ -179,7 +179,7 @@ class Operators:
 
                 valid_cars = []
                 for x in range(self.vehicle):
-                    curr = self.find_valid_feasable_placements(x)
+                    curr = self.find_valid_feasible_placements(x)
                     if call in curr:
                         valid_cars.append(x)
 
@@ -196,7 +196,17 @@ class Operators:
         return arr
 
     def to_list_v2(self, arr):
-        out = [[] * x for x in range(self.vehicle + 1)]  # change six by vehicle +1
+        """
+        Converts a one dimensional array to a
+        two dimensional list
+
+        problem specific method.
+        Todo runtime
+        :param arr:
+        :return:
+        """
+        # out = list([[] * x for x in range(self.vehicle + 1)])  # two dim n vehicle list
+        out = [[]] * (self.vehicle + 1)
         counter = 0
 
         L = list(map(str, arr))
@@ -209,6 +219,7 @@ class Operators:
                 counter += 1
             else:
                 content += L[elem] + ' '
+
         out[counter] = list(content.split())
 
         for outer in range(len(out)):
@@ -221,11 +232,11 @@ class Operators:
 
         return out
 
-    def find_valid_feasable_placements(self, x):
+    def find_valid_feasible_placements(self, x):
         return [i for i, e in enumerate(self.vessel_cargo[x], 1) if e == 1.]
 
-    def feasable_placements_with_outsorce(self):
-        vehicle_valid_calls = [self.find_valid_feasable_placements(x) for x in range(self.vehicle)]
+    def feasible_placements_with_outsource(self):
+        vehicle_valid_calls = [self.find_valid_feasible_placements(x) for x in range(self.vehicle)]
         outsorcevehicle = [x for x in range(1, self.calls + 1)]
         vehicle_valid_calls.append(outsorcevehicle)
         return vehicle_valid_calls
