@@ -52,7 +52,6 @@ class Algorithms:
         incumbent = s_0
         best_solution = s_0
         delta_W = []
-        print(f"length of delta w is {len(delta_W)}")
         start = time.time()
         while len(delta_W) == 0:
             for w in range(100):
@@ -68,7 +67,6 @@ class Algorithms:
                     if random.random() < 0.8:
                         incumbent = new_sol
                     delta_W.append(delta_E)
-        print(f"length of delta w is {len(delta_W)}")
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0,
@@ -135,27 +133,23 @@ def run_all(i):
     :return:
     """
     m = Algorithms(file_list[i])
-
+    op = Operators(m.problem)
     for i in range(10):
-        m.sa(Operators.one_insert)
+        m.local_search(op.one_insert_v2)
     m.print_stats("One insert (SA): ")
 
 
 if __name__ == '__main__':
+    """
     myday = Algorithms(file_list[1])
     op = Operators(myday.problem)
     myday.sa(op.one_insert)
     myday.print_stats("One Insert: ")
-
-    """    
-    for i in range(6):
-        local_hero = Algorithms(file_list[i])
-        for x in range(10):
-            local_hero.sa(three_exchange)
-        local_hero.print_stats("Three Swap (SA): ")  # Local search (1ins)
     """
-    """    
-    pool = mp.Pool(processes=6)
 
-    pool.map(run_all, range(0, 6))
-    """
+    # v = [run_all(i) for i in range(2)]
+
+    pool = mp.Pool(processes=3)
+
+    pool.map(run_all, range(0, 3))
+
