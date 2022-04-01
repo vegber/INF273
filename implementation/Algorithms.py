@@ -1,11 +1,6 @@
 import math
-import os
-import random
-import time
 import multiprocessing as mp
-
-import numpy as np
-from natsort import natsorted
+import time
 
 from operators import *
 from random_solution_driver import get_init, sort_tuple, avg_Cost
@@ -53,7 +48,7 @@ class Algorithms:
         best_solution = s_0
         delta_W = []
         start = time.time()
-        while len(delta_W) == 0:
+        while len(delta_W) == 0 and sum(delta_W) == 0:
             for w in range(100):
                 new_sol = operator(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
@@ -67,6 +62,7 @@ class Algorithms:
                     if random.random() < 0.8:
                         incumbent = new_sol
                     delta_W.append(delta_E)
+
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0,
@@ -90,6 +86,52 @@ class Algorithms:
 
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
+
+    def sa_3op(self, op1, op2, op3):
+        s_0 = get_init(self.vehicle, self.calls)
+        fin_temp = 0.1
+        incumbent = s_0
+        best_solution = s_0
+        delta_W = []
+        start = time.time()
+        while len(delta_W) == 0:
+            for w in range(100):
+                new_sol = op1(best_solution)
+                delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
+
+                passed, cause = feasibility_check(new_sol, self.problem)
+                if passed and delta_E < 0:
+                    incumbent = new_sol
+                    if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
+                        best_solution = incumbent
+                elif passed:
+                    if random.random() < 0.8:
+                        incumbent = new_sol
+                    delta_W.append(delta_E)
+        delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
+        T_0 = (-delta_AVG) / np.log(0.8)
+        alfa = pow(fin_temp / T_0,
+                   1 / -9900)
+        T = T_0
+
+        for e in range(1, 9900):
+            new_sol = op1(incumbent)
+            delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
+
+            feas, _ = feasibility_check(new_sol, self.problem)
+
+            if feas and delta_E < 0:
+                incumbent = new_sol
+                if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
+                    best_solution = incumbent
+            elif feas and random.random() < pow(math.e, (-delta_E / T)):
+                incumbent = new_sol
+
+            T = alfa * T
+
+        self.run_time.append(time.time() - start)
+        self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
+
 
     def print_stats(self, operator_name=None):
         print(self.problem_name, end="\n")
@@ -135,8 +177,8 @@ def run_all(i):
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
     for i in range(10):
-        m.local_search(op.one_insert_v2)
-    m.print_stats("One insert (SA): ")
+        m.sa(op.one_insert_v2)
+    m.print_stats("Smart insert (SA): ")
 
 
 if __name__ == '__main__':
@@ -152,4 +194,3 @@ if __name__ == '__main__':
     pool = mp.Pool(processes=3)
 
     pool.map(run_all, range(0, 3))
-
