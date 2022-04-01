@@ -450,12 +450,16 @@ class Operators:
         vehicle_valid_calls.append(outsorcevehicle)
         return vehicle_valid_calls
 
+
 """
 path = '../utils_code/pdp_utils/data/pd_problem/'
 file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
 
+sol = [23, 23, 1, 1, 0, 11, 11, 17, 17, 0, 16, 16, 24, 24, 5, 5, 2, 2, 31, 31, 0, 6, 6, 13, 13, 0, 8, 8, 26, 32, 32, 26,
+       0, 14, 27, 14, 27, 0, 35, 35, 10, 10, 0, 25, 33, 7, 19, 15, 18, 3, 30, 25, 18, 21, 15, 9, 20, 22, 20, 3, 34, 28,
+       4, 29, 29, 4, 12, 19, 28, 33, 21, 12, 34, 9, 22, 30, 7]
 prob = load_problem(path + file_list[0])
-init = get_init(3, 7)
+# a, b = feasibility_check(sol, prob)
 
 op = Operators(prob)
 

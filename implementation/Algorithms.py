@@ -48,8 +48,8 @@ class Algorithms:
         best_solution = s_0
         delta_W = []
         start = time.time()
-        while len(delta_W) == 0 and sum(delta_W) == 0:
-            for w in range(100):
+        while len(delta_W) == 0 or sum(delta_W) == 0:
+            for w in range(200):
                 new_sol = operator(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
 
@@ -62,11 +62,10 @@ class Algorithms:
                     if random.random() < 0.8:
                         incumbent = new_sol
                     delta_W.append(delta_E)
-
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0,
-                   1 / -9900)
+                   1 / -9800)
         T = T_0
 
         for e in range(1, 9900):
@@ -87,6 +86,19 @@ class Algorithms:
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
 
+    def get_op(self, operator1: Operators.one_insert, operator2: Operators.smart_k_reinsert,
+               operator3: Operators.one_insert_v2) -> Operators:
+        """
+
+        :rtype: Operator
+        """
+        choices = [operator1, operator2, operator3]
+        # for even dist: un - comment this
+        # return random.choice(choices)
+        op_index = [0, 1, 2]
+        elem = random.choices(op_index, weights=[30, 20, 50])[0]
+        return choices[elem]
+
     def sa_3op(self, op1, op2, op3):
         s_0 = get_init(self.vehicle, self.calls)
         fin_temp = 0.1
@@ -94,11 +106,11 @@ class Algorithms:
         best_solution = s_0
         delta_W = []
         start = time.time()
-        while len(delta_W) == 0:
+        while len(delta_W) == 0 or sum(delta_W) == 0:
             for w in range(100):
-                new_sol = op1(best_solution)
+                op = self.get_op(op1, op2, op3)
+                new_sol = op(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
-
                 passed, cause = feasibility_check(new_sol, self.problem)
                 if passed and delta_E < 0:
                     incumbent = new_sol
@@ -111,7 +123,7 @@ class Algorithms:
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0,
-                   1 / -9900)
+                   1 / -9800)
         T = T_0
 
         for e in range(1, 9900):
@@ -131,7 +143,6 @@ class Algorithms:
 
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
-
 
     def print_stats(self, operator_name=None):
         print(self.problem_name, end="\n")
@@ -177,8 +188,8 @@ def run_all(i):
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
     for i in range(10):
-        m.sa(op.one_insert_v2)
-    m.print_stats("Smart insert (SA): ")
+        m.sa_3op(op.one_insert, op.smart_k_reinsert, op.one_insert_v2)
+    m.print_stats("All three op (SA): ")
 
 
 if __name__ == '__main__':
@@ -191,6 +202,6 @@ if __name__ == '__main__':
 
     # v = [run_all(i) for i in range(2)]
 
-    pool = mp.Pool(processes=3)
+    pool = mp.Pool(processes=6)
 
-    pool.map(run_all, range(0, 3))
+    pool.map(run_all, range(0, 6))
