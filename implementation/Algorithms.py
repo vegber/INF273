@@ -1,6 +1,7 @@
 import math
 import multiprocessing as mp
 import time
+import matplotlib.pyplot as plt
 
 from operators import *
 from random_solution_driver import get_init, sort_tuple, avg_Cost
@@ -18,6 +19,7 @@ class Algorithms:
         self.vessel_cargo = self.problem['VesselCargo']
         self.top10best_solution = []  # store solution / cost
         self.run_time = []
+        self.temps = []
 
     def loaded_problem(self):
         return self.problem
@@ -94,10 +96,10 @@ class Algorithms:
         """
         choices = [operator1, operator2, operator3]
         # for even dist: un - comment this
-        # return random.choice(choices)
-        op_index = [0, 1, 2]
-        elem = random.choices(op_index, weights=[30, 20, 50])[0]
-        return choices[elem]
+        return random.choice(choices)
+        # op_index = [0, 1, 2]
+        # elem = random.choices(op_index, weights=[30, 20, 50])[0]
+        # return choices[elem]
 
     def sa_3op(self, op1, op2, op3):
         s_0 = get_init(self.vehicle, self.calls)
@@ -122,11 +124,11 @@ class Algorithms:
                     delta_W.append(delta_E)
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
-        alfa = pow(fin_temp / T_0,
-                   1 / -9800)
+        alfa = pow(fin_temp / T_0, 1 / 9900)
         T = T_0
-
+        temps = []
         for e in range(1, 9900):
+            temps.append(T)
             new_sol = op1(incumbent)
             delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
 
@@ -143,6 +145,7 @@ class Algorithms:
 
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
+        self.temps.append(temps)
 
     def print_stats(self, operator_name=None):
         print(self.problem_name, end="\n")
@@ -177,6 +180,20 @@ class Algorithms:
         print(self.top10best_solution[0][0], end="\n")
         print("\n" * 3)
 
+    def print_temp(self):
+        print("Im here")
+        n_model = len(self.temps)
+        fig, axes = plt.subplots(1, n_model, figsize=(7 * n_model, 5), sharey=True, squeeze=False)
+
+        for temp, ax in zip(self.temps, axes.flat):
+            ax.plot(temp, label="Temperature change", color="c")
+            ax.set_title("10k")
+            ax.set_xlabel("Iterations")
+            ax.set_ylabel("Temperature")
+            ax.legend()
+
+        plt.show()
+
 
 def run_all(i):
     """
@@ -190,6 +207,7 @@ def run_all(i):
     for i in range(10):
         m.sa_3op(op.one_insert, op.smart_k_reinsert, op.one_insert_v2)
     m.print_stats("All three op (SA): ")
+    m.print_temp()
 
 
 if __name__ == '__main__':

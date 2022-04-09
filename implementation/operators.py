@@ -297,19 +297,21 @@ class Operators:
 
     def smart_k_reinsert(self, solution):
 
+        # choose random length
         k_val = random.choice([2, 3, 4])
         calls = random.sample(range(1, self.calls + 1), k=k_val)
         base_solution = [x for x in solution if x not in calls]
 
         for call in calls:
             insert_position = []
-            zeros = [i for i, x in enumerate(base_solution) if x == 0]
+            car_sep = [i for i, x in enumerate(base_solution) if x == 0]
             compatible_vehicles = [i for i in range(self.vehicle) if self.vessel_cargo[i, call - 1]]
             random.shuffle(compatible_vehicles)
 
             for vehicle in compatible_vehicles:
-                lower_bound, upper_bound = 0 if vehicle == 0 else zeros[vehicle - 1] + 1, zeros[vehicle]
-                route = base_solution[lower_bound:upper_bound].copy()
+                # find valid places for compat veh. lower_bound index <==> upper_bound_index
+                lower_bound_index, upper_bound_index = 0 if vehicle == 0 else car_sep[vehicle - 1] + 1, car_sep[vehicle]
+                route = base_solution[lower_bound_index:upper_bound_index].copy()
                 best_position = (-1, -1)
                 min_cost = float('inf')
 
@@ -332,15 +334,15 @@ class Operators:
                 elif len(route) == 0:
                     best_position = (0, 0)
 
-                insert_position = (lower_bound + best_position[0], lower_bound + best_position[1])
+                insert_position = (lower_bound_index + best_position[0], lower_bound_index + best_position[1])
                 break
 
             if len(insert_position) > 0:
                 base_solution.insert(insert_position[0], call)
                 base_solution.insert(insert_position[1], call)
             else:
-                base_solution.insert(zeros[-1], call)
-                base_solution.insert(zeros[-1], call)
+                base_solution.insert(car_sep[-1], call)
+                base_solution.insert(car_sep[-1], call)
 
         return base_solution
 
@@ -451,6 +453,7 @@ class Operators:
         return vehicle_valid_calls
 
 
+
 """
 path = '../utils_code/pdp_utils/data/pd_problem/'
 file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
@@ -463,7 +466,7 @@ prob = load_problem(path + file_list[0])
 
 op = Operators(prob)
 
-output = op.one_insert_v2(init)
+output = op.smart_k_reinsert(get_init(3, 7))
 
 print(output)
 """
