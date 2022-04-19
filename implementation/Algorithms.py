@@ -88,8 +88,8 @@ class Algorithms:
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
 
-    def get_op(self, operator1: Operators.one_insert, operator2: Operators.smarter_insert,
-               operator3: Operators.one_insert_v2) -> Operators:
+    def get_op(self, operator1: Operators.one_insert, operator2: Operators.k_insert,
+               operator3: Operators.max_cost_swap) -> Operators:
         """
 
         :rtype: Operator
@@ -204,10 +204,10 @@ def run_all(i):
     """
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
-    for i in range(1):
-        m.sa_3op(op.one_insert, op.smarter_insert, op.one_insert_v2)
+    for i in range(10):
+        m.sa_3op(op.one_insert, op.k_insert, op.change_car_insert)
     m.print_stats("All three op (SA): ")
-    # m.print_temp()
+    m.print_temp()
 
 
 if __name__ == '__main__':
@@ -220,6 +220,6 @@ if __name__ == '__main__':
 
     # v = [run_all(i) for i in range(2)]
 
-    pool = mp.Pool(processes=3)
+    pool = mp.Pool(processes=2)
 
-    pool.map(run_all, range(0, 3))
+    pool.map(run_all, range(0, 2))

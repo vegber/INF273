@@ -1,7 +1,8 @@
 import os
 import random
+
 from natsort import natsorted
-import copy
+
 from random_solution_driver import get_init
 from utils_code.pdp_utils import *
 
@@ -101,15 +102,6 @@ def which_cars(arr, first_swap_index, second_valid_index):
     return car_index[0], car_index[1]
 
 
-def find_vehicle_positions(base_solution):
-    """
-    Find vehicle positions
-    :param base_solution:
-    :return:
-    """
-    return [i for i, x in enumerate(base_solution) if x == 0]
-
-
 class Operators:
     def __init__(self, loaded_problem):
         self.vehicle = loaded_problem['n_vehicles']
@@ -175,8 +167,8 @@ class Operators:
     def change_car_insert(self, arr, car):
         """
         One insert operator:
-        inputs a one dim array, outputs a one dim arr.
         Simply takes random vehicles and puts them in another semi - random vehicle (valid cars)
+        Will only swap calls to valid "places" / cars
         :param arr:
         :return:
         """
@@ -206,24 +198,17 @@ class Operators:
         arr = list_format(sol_vehicle_arr)
         return arr
 
-    def one_insert_v2(self, arr):
+    def max_cost_swap(self, arr):
         """
-        NAIVE !!!!
-        type cost for each vehicle, modify one insert to change curr max vehicle
+        Naive operator. Uses a custom cost function to find the vehicle with most
+        costly calls. Idea is to spread cost evenly.
         :param arr:
         :return:
         """
         sol_vehicle_arr = self.to_list_v2(arr)
-        # find which car has most cost
-        # best_model = models[(model_score.index(max(model_score)))]
         car_cost = self.car_cost(sol_vehicle_arr)
         car_to_change = car_cost.index(max(car_cost))
-        # Todo
-        # Call one insert to change this vehicle
         out = self.change_car_insert(arr, car_to_change)
-        # print(f"Cargo {[len(x) for x in self.cargo]}")
-        # print(f"Vessel Cargo: {self.vessel_cargo}")
-        # print(f"Vessel cap: {self.vessel_capacity}")
         return out
 
     def car_cost(self, arr):
@@ -303,75 +288,90 @@ class Operators:
 
         return RouteTravelCost + CostInPorts
 
-    def smarter_insert(self, arr):
-        """
+    def k_insert(self, solution):
 
-        :param arr:
-        :return:
-        """
-        k_val = random.choice([2, 3, 4])  # choose how many calls to change
-        # Any more than 5 and my PC dies!
+        k_val = random.choice([2, 3, 4])
         calls = random.sample(range(1, self.calls + 1), k=k_val)
-        arr_without_calls_to_change = [x for x in arr if x not in calls]
+        base_solution = [x for x in solution if x not in calls]
 
         for call in calls:
-            insert_position = []
-            car_sep = find_vehicle_positions(arr_without_calls_to_change)
-            compatible_vehicles = self.get_compatible_vehicles(call)
 
-            for vehicle in compatible_vehicles:
-                # find valid places for compat vehicle. lower_bound index <==> upper_bound_index
-                lower_bound_index, upper_bound_index = self.get_upper_lower_bound(car_sep, vehicle)
-                route = arr_without_calls_to_change[lower_bound_index:upper_bound_index].copy()
-                min_cost = float(-1)
-                curr_best = (-1, -1)
-
-                for i in range(len(route)):
-                    first_insert_route = route.copy()
-                    first_insert_route.insert(i, call)
-                    for j in range(i, len(route)):
-                        second_insert_route = first_insert_route.copy()
-                        second_insert_route.insert(j, call)
-                        if not self.feasible_vehicle(second_insert_route):
-                            continue
-
-                        cost = self.route_cost(second_insert_route)
-                        if cost < min_cost:
-                            min_cost = cost
-                            curr_best = (i, j)
-
-                if len(route) > 0 and curr_best == (-1, -1):
-                    continue
-                elif len(route) == 0:
-                    curr_best = (0, 0)
-
-                insert_position = (lower_bound_index + curr_best[0], lower_bound_index + curr_best[1])
-                break
-
-            if len(insert_position) > 0:
-                arr_without_calls_to_change.insert(insert_position[0], call)
-                arr_without_calls_to_change.insert(insert_position[1], call)
-            else:
-                arr_without_calls_to_change.insert(car_sep[-1], call)
-                arr_without_calls_to_change.insert(car_sep[-1], call)
-
-        return arr_without_calls_to_change
-
-    def get_compatible_vehicles(self, call, shuffle=True):
-        compatible_vehicles = [i for i in range(self.vehicle) if self.vessel_cargo[i, call - 1]]
-        if shuffle:
+            car_index = [i for i, x in enumerate(base_solution) if x == 0]
+            compatible_vehicles = self.get_compatible_vehicle(call)
             random.shuffle(compatible_vehicles)
-            return compatible_vehicles
-        else:
-            return compatible_vehicles
 
-    def get_upper_lower_bound(self, car_sep, vehicle):
-        lower_bound_index, upper_bound_index = 0 if vehicle == 0 else car_sep[vehicle - 1] + 1, car_sep[vehicle]
-        return lower_bound_index, upper_bound_index
+            insert_positions = self.find_best_pos(base_solution, call, car_index, compatible_vehicles)
+
+            if len(insert_positions) > 0:
+                base_solution.insert(insert_positions[0], call) # inserts at call and to the right
+                base_solution.insert(insert_positions[1], call)
+            else:
+                base_solution.insert(car_index[-1], call)
+                base_solution.insert(car_index[-1], call)
+
+        return base_solution
+
+    def find_best_pos(self, base_solution, call, car_index, compatible_vehicles):
+        """
+        Iterates over compatible vehicles.
+
+        :param base_solution: solution without calls to change:
+        :param call: current call to change :
+        :param car_index: start index of cars :
+        :param compatible_vehicles: valid cars to place call :
+        :param insert_position::
+        :return:
+        """
+
+        insert_position = []
+        for vehicle in compatible_vehicles:
+            lower_bound, upper_bound = self.get_upper_lower_bound(car_index, vehicle)
+            valid_car_indexes = base_solution[lower_bound:upper_bound].copy()
+
+            best_position = (-1, -1)
+            min_cost = -1
+
+            for i in range(len(valid_car_indexes)):
+                first_insert_route = valid_car_indexes.copy()
+                first_insert_route.insert(i, call)
+                for j in range(i, len(valid_car_indexes)):
+                    second_insert_route = first_insert_route.copy()
+                    second_insert_route.insert(j, call)
+                    if not self.feasible_vehicle(second_insert_route):
+                        continue
+
+                    cost = self.route_cost(second_insert_route)
+                    if cost < min_cost:
+                        min_cost = cost
+                        best_position = (i, j)
+
+            if len(valid_car_indexes) > 0 and best_position == (-1, -1):
+                continue
+            elif len(valid_car_indexes) == 0:
+                best_position = (0, 0)
+
+            insert_position = (lower_bound + best_position[0], lower_bound + best_position[1])
+            break
+        return insert_position
+
+    def get_upper_lower_bound(self, car_index, vehicle):
+        """
+        Returns a tuple of the valid insert start/end index of vehicle
+        :param car_index:
+        :param vehicle:
+        :return:
+        """
+        if vehicle == 0:
+            lower_bound, upper_bound = 0, 0
+        else:
+            lower_bound, upper_bound = car_index[vehicle - 1] + 1, car_index[vehicle]
+        return lower_bound, upper_bound
+
+    def get_compatible_vehicle(self, call):
+        return [i for i in range(self.vehicle) if self.vessel_cargo[i, call - 1]]
 
     def get_valid_calls(self, random_vehicle):
         """
-
         :param random_vehicle:
         :return:
         """
@@ -408,7 +408,7 @@ class Operators:
 
             else:
                 cycle = arr_2[vehicle_most_call][:cycles[-1] + 1]
-                cycle = cycle[0: 2]
+                cycle = cycle[0: 2]  # random.randrange(0, len(cycle), 2)]
                 call = cycle[0]
 
                 valid_cars = []
@@ -476,15 +476,17 @@ class Operators:
         return vehicle_valid_calls
 
 
-"""path = '../utils_code/pdp_utils/data/pd_problem/'
+path = '../utils_code/pdp_utils/data/pd_problem/'
 file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
 
-prob = load_problem(path + file_list[2])
+sol = [23, 23, 1, 1, 0, 11, 11, 17, 17, 0, 16, 16, 24, 24, 5, 5, 2, 2, 31, 31, 0, 6, 6, 13, 13, 0, 8, 8, 26, 32, 32, 26,
+       0, 14, 27, 14, 27, 0, 35, 35, 10, 10, 0, 25, 33, 7, 19, 15, 18, 3, 30, 25, 18, 21, 15, 9, 20, 22, 20, 3, 34, 28,
+       4, 29, 29, 4, 12, 19, 28, 33, 21, 12, 34, 9, 22, 30, 7]
+prob = load_problem(path + file_list[0])
 # a, b = feasibility_check(sol, prob)
 
 op = Operators(prob)
 
-output = op.k_insert(get_init(7, 35))
+output = op.k_insert(get_init(3, 7))
 
 print(output)
-"""
