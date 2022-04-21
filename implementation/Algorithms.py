@@ -96,10 +96,10 @@ class Algorithms:
         """
         choices = [operator1, operator2, operator3]
         # for even dist: un - comment this
-        return random.choice(choices)
-        # op_index = [0, 1, 2]
-        # elem = random.choices(op_index, weights=[30, 20, 50])[0]
-        # return choices[elem]
+        # return random.choice(choices)
+        op_index = [0, 1, 2]
+        elem = random.choices(op_index, weights=[25, 50, 25])[0]
+        return choices[elem]
 
     def sa_3op(self, op1, op2, op3):
         s_0 = get_init(self.vehicle, self.calls)
@@ -205,9 +205,9 @@ def run_all(i):
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
     for i in range(10):
-        m.sa_3op(op.one_insert, op.k_insert, op.change_car_insert)
+        m.sa_3op(op.one_insert, op.k_insert, op.max_cost_swap)
     m.print_stats("All three op (SA): ")
-    m.print_temp()
+    # m.print_temp()
 
 
 if __name__ == '__main__':
@@ -220,6 +220,6 @@ if __name__ == '__main__':
 
     # v = [run_all(i) for i in range(2)]
 
-    pool = mp.Pool(processes=2)
+    pool = mp.Pool(processes=6)
 
-    pool.map(run_all, range(0, 2))
+    pool.map(run_all, range(0, 6))
