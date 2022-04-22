@@ -89,19 +89,19 @@ class Algorithms:
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
 
     def get_op(self, operator1: Operators.one_insert, operator2: Operators.k_insert,
-               operator3: Operators.max_cost_swap) -> Operators:
+               operator3: Operators.smarter_insert, operator4: Operators.max_cost_swap) -> Operators:
         """
 
         :rtype: Operator
         """
-        choices = [operator1, operator2, operator3]
+        choices = [operator1, operator2, operator3, operator4]
         # for even dist: un - comment this
-        # return random.choice(choices)
-        op_index = [0, 1, 2]
-        elem = random.choices(op_index, weights=[25, 50, 25])[0]
-        return choices[elem]
+        return random.choice(choices)
+        # op_index = [0, 1, 2]
+        # elem = random.choices(op_index, weights=[25, 50, 25])[0]
+        # return choices[elem]
 
-    def sa_3op(self, op1, op2, op3):
+    def sa_3op(self, op1, op2, op3, op4):
         s_0 = get_init(self.vehicle, self.calls)
         fin_temp = 0.1
         incumbent = s_0
@@ -110,7 +110,7 @@ class Algorithms:
         start = time.time()
         while len(delta_W) == 0 or sum(delta_W) == 0:
             for w in range(100):
-                op = self.get_op(op1, op2, op3)
+                op = self.get_op(op1, op2, op3, op4)
                 new_sol = op(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
                 passed, cause = feasibility_check(new_sol, self.problem)
@@ -205,7 +205,7 @@ def run_all(i):
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
     for i in range(10):
-        m.sa_3op(op.one_insert, op.k_insert, op.max_cost_swap)
+        m.sa_3op(op.one_insert, op.k_insert, op.smarter_insert, op.max_cost_swap)
     m.print_stats("All three op (SA): ")
     # m.print_temp()
 
@@ -220,6 +220,6 @@ if __name__ == '__main__':
 
     # v = [run_all(i) for i in range(2)]
 
-    pool = mp.Pool(processes=6)
+    pool = mp.Pool(processes=1)
 
-    pool.map(run_all, range(0, 6))
+    pool.map(run_all, range(0, 1))

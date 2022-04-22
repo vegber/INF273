@@ -251,87 +251,11 @@ class Operators:
         out = self.change_car_insert(arr, car_to_change)
         return out
 
-    def car_cost(self, arr):
-        """
-        Input two dim per car
-        :param arr:
-        :return:
-        """
-        return [self.route_cost(x) for x in arr]
+    def smarter_insert(self, arr):
+        return self.k_insert(arr, k_val=1)
 
-    def feasible_vehicle(self, route):
-        len_route = len(route)
+    def k_insert(self, solution, k_val=random.choice([2, 3, 4])):
 
-        if len_route == 0:
-            return True
-
-        load_size, current_time = 0, 0
-        route_aux = route.copy()
-        route_aux = [x - 1 for x in route_aux]
-        sorted_route = np.sort(route_aux, kind='mergesort')
-        I = np.argsort(route_aux, kind='mergesort')
-        index = np.argsort(I, kind='mergesort')
-
-        load_size -= self.cargo[sorted_route, 2]
-        load_size[::2] = self.cargo[sorted_route[::2], 2]
-        load_size = load_size[index]
-        if np.any(self.vessel_capacity[self.vehicle - 1] - np.cumsum(load_size) < 0):
-            return False
-
-        time_windows = np.zeros((2, len_route))
-        time_windows[0] = self.cargo[sorted_route, 6]
-        time_windows[0, ::2] = self.cargo[sorted_route[::2], 4]
-        time_windows[1] = self.cargo[sorted_route, 7]
-        time_windows[1, ::2] = self.cargo[sorted_route[::2], 5]
-        time_windows = time_windows[:, index]
-
-        port_index = self.cargo[sorted_route, 1].astype(int)
-        port_index[::2] = self.cargo[sorted_route[::2], 0]
-        port_index = port_index[index] - 1
-
-        lu_time = self.unloading_time[self.vehicle - 1, sorted_route]
-        lu_time[::2] = self.loading_time[self.vehicle - 1, sorted_route[::2]]
-        lu_time = lu_time[index]
-        diag = self.travel_time[self.vehicle - 1, port_index[:-1], port_index[1:]]
-        first_visit_time = self.first_travel_time[self.vehicle - 1, int(self.cargo[route_aux[0], 0] - 1)]
-        route_travel_time = np.hstack((first_visit_time, diag.flatten()))
-
-        arrive_time = np.zeros(len_route)
-        for i in range(len_route):
-            arrive_time[i] = np.max((current_time + route_travel_time[i], time_windows[0, i]))
-            if arrive_time[i] > time_windows[1, i]:
-                return False
-            current_time = arrive_time[i] + lu_time[i]
-
-        return True
-
-    def route_cost(self, route):
-        if len(route) == 0:
-            return 0
-
-        calls_to_change = route.copy()
-        calls_to_change = np.sort([x - 1 for x in calls_to_change], kind="quicksort")
-        calls_to_change_indexes = np.argsort(calls_to_change.copy(), kind="quicksort")
-
-        # sortRout = np.sort(currentVPlan, kind='mergesort')
-        # I = np.argsort(calls_to_change, kind='mergesort')
-        # Indx = np.argsort(I, kind='mergesort')
-
-        PortIndex = self.cargo[calls_to_change, 1].astype(int)
-        PortIndex[::2] = self.cargo[calls_to_change[::2], 0]
-        PortIndex = PortIndex[calls_to_change_indexes] - 1
-
-        Diag = self.TravelCost[self.vehicle - 1, PortIndex[:-1], PortIndex[1:]]
-
-        FirstVisitCost = self.FirstTravelCost[self.vehicle - 1, int(self.cargo[calls_to_change[0], 0] - 1)]
-        RouteTravelCost = np.sum(np.hstack((FirstVisitCost, Diag.flatten())))
-        CostInPorts = np.sum(self.PortCost[self.vehicle - 1, calls_to_change]) / 2
-
-        return RouteTravelCost + CostInPorts
-
-    def k_insert(self, solution):
-
-        k_val = random.choice([2, 3, 4])
         calls = random.sample(range(1, self.calls + 1), k=k_val)
         org_arr_without_calls_to_move = get_sol_without_calls_to_move(calls, solution)
 
@@ -344,6 +268,87 @@ class Operators:
 
         arr = org_arr_without_calls_to_move.copy()
         return arr
+
+    def car_cost(self, arr):
+        """
+        Input two dim per car
+        :param arr:
+        :return:
+        """
+        return [self.call_cost(i, x) for i, x in enumerate(arr)]
+
+    def feasible_vehicle(self, car, calls_to_place):
+        calls_length = len(calls_to_place)
+        if not calls_length: return True  # can apply if not available car
+
+        load_capacity, current_time, total = 0, 0, 0
+        calls = calls_to_place.copy()
+        calls = [x - 1 for x in calls]  # zero index calls
+        index = [i for i, e in enumerate(calls)]
+        load_capacity -= self.cargo[calls, 2]  # matrix (y, x) fetch cargo at call
+        load_capacity[::2] = self.cargo[calls[::2], 2]  # eval calls
+        # check if any vessel is overloaded
+        if not np.any(self.vessel_capacity[car] - [total := total + x for x in load_capacity[index]] < 0):
+            time_windows = np.zeros((2, calls_length))
+            time_windows[0] = self.cargo[calls, 6]
+            time_windows[0, ::2] = self.cargo[calls[::2], 4]
+            time_windows[1] = self.cargo[calls, 7]
+            time_windows[1, ::2] = self.cargo[calls[::2], 5]
+            time_windows = time_windows[:, index]
+
+            port_index = self.cargo[calls, 1].astype(int)
+            port_index[::2] = self.cargo[calls[::2], 0]
+            port_index = port_index[index] - 1
+
+            # Todo port cost
+
+            loading_time = self.unloading_time[car, calls]
+            loading_time[::2] = self.loading_time[car, calls[::2]]
+            loading_time = loading_time[index]
+            travel_time_port = self.travel_time[car, port_index[:-1], port_index[1:]]
+            first_visit_time = self.first_travel_time[car, int(self.cargo[calls[0], 0] - 1)]
+            route_travel_time = np.hstack((first_visit_time, travel_time_port.flatten()))
+            arrive_time = np.zeros(calls_length)
+            return self.is_within_arrival_time(arrive_time,
+                                               calls_length,
+                                               current_time,
+                                               loading_time,
+                                               route_travel_time,
+                                               time_windows)
+        return False
+
+    def is_within_arrival_time(self, arrive_time, calls_length, current_time, lu_time, route_travel_time, time_windows):
+        for i in range(calls_length):
+            arrive_time[i] = np.max((current_time + route_travel_time[i], time_windows[0, i]))
+            if arrive_time[i] > time_windows[1, i]:
+                return False
+            current_time = arrive_time[i] + lu_time[i]
+        return True
+
+    def call_cost(self, car, route):
+        """
+        Modifiable cost function. Returns the cost current calls.
+        Uses the cargo, travel cost, FirstTravelCost, PortCost from the problem.
+        :param route:
+        :return:
+        """
+        car = car - 1
+
+        if len(route) == 0:
+            return 0
+
+        calls_to_change = route.copy()
+        calls_to_change = np.sort([x - 1 for x in calls_to_change])
+        calls_to_change_indexes = [i for i, e in enumerate(calls_to_change)]
+
+        cargo_matrix = self.cargo[calls_to_change, 1].astype(int)
+        cargo_matrix[::2] = self.cargo[calls_to_change[::2], 0]  # step - wise two and two fetch at cargo list.comp
+        cargo_matrix = cargo_matrix[calls_to_change_indexes] - 1
+
+        travel_cost_at_curr_car = self.TravelCost[car, cargo_matrix[:-1], cargo_matrix[1:]]
+        FirstVisitCost = self.FirstTravelCost[car, (self.cargo[calls_to_change[0], 0] - 1).astype(int)]
+        return np.sum(np.hstack((FirstVisitCost, travel_cost_at_curr_car.flatten()))) + np.sum(
+            self.PortCost[car, calls_to_change]) / 2
 
     def find_best_pos(self, base_solution, call, car_index, compatible_vehicles):
         """
@@ -370,10 +375,10 @@ class Operators:
                 for j in range(i, len(valid_car_indexes)):
                     second_insert_route = first_insert_route.copy()
                     second_insert_route.insert(j, call)
-                    if not self.feasible_vehicle(second_insert_route):
+                    if not self.feasible_vehicle(vehicle, second_insert_route):
                         continue
 
-                    cost = self.route_cost(second_insert_route)
+                    cost = self.call_cost(vehicle, second_insert_route)
                     if cost < min_cost:
                         min_cost = cost
                         best_position = (i, j)
@@ -507,7 +512,7 @@ prob = load_problem(path + file_list[0])
 
 op = Operators(prob)
 
-output = op.max_cost_swap(get_init(3, 7))
+output = op.k_insert(get_init(3, 7))
 
 print(output)
 """
