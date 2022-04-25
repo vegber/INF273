@@ -172,5 +172,5 @@ if __name__ == '__main__':
     # [run_all(i) for i in range(6)]
 
     # Multithreading:
-    pool = mp.Pool(processes=6)
-    pool.map(run_all, range(0, 6))
+    pool = mp.Pool(processes=1)
+    pool.map(run_all, range(0, 1))

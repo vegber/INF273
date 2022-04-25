@@ -27,11 +27,8 @@ class Operators:
         """
         sol_vehicle_arr = self.to_list_v2(arr)
         random_vehicle = random.randint(0, self.vehicle)  # zero indexed
-
         valid_placements = self.get_valid_calls(random_vehicle)
-
         random_call = random.choice(valid_placements)
-
         # check if random vehicle is "itself"
         origin_vehicle, origin_pickup, origin_delivery = find_indexes(sol_vehicle_arr, random_call)
         """
@@ -48,14 +45,12 @@ class Operators:
             # find new pickup index
             index = random.randint(0, len(sol_vehicle_arr[random_vehicle]))
             sol_vehicle_arr[random_vehicle].insert(index, random_call)
-
         else:  # call not in same vehicle
             # remove pickup
             remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr)
 
             # insert pickup & delivery
             insert_call(random_vehicle, random_call, sol_vehicle_arr)
-
         # change sol_vehicle_arr back to normal form
         arr = list_format(sol_vehicle_arr)
         return arr
@@ -74,19 +69,23 @@ class Operators:
         return out
 
     def two_inserter(self, arr):
-
+        """
+        Two insert method that removes two random delivery calls.
+        Insertion is helped by checking problem specific data at
+        the removed calls. Efficient at pointing the search at
+        the right "track"...
+        :param arr:
+        :return:
+        """
         calls = random.sample(range(1, self.calls + 1), k=2)
         org_arr_without_calls_to_move = get_sol_without_calls_to_move(calls, arr)
 
         for call in calls:
             car_index = get_vehicle_indexes(org_arr_without_calls_to_move)
             compatible_vehicles = self.get_compatible_vehicle(call)
-            random.shuffle(compatible_vehicles)  # add a layer of random - ness
             insert_positions = self.find_best_pos(org_arr_without_calls_to_move, call, car_index, compatible_vehicles)
             place_at_insert_positions(call, car_index, insert_positions, org_arr_without_calls_to_move)
-
-        arr = org_arr_without_calls_to_move.copy()
-        return arr
+        return org_arr_without_calls_to_move.copy()
 
     def car_cost(self, arr):
         """
@@ -126,7 +125,7 @@ class Operators:
         arr = list_format(sol_vehicle_arr)
         return arr
 
-    def validity_check(self, car, calls_to_place):
+    def valid_insertion(self, car, calls_to_place):
         """
         Problem specific validity checker. Boolean "check if" calls can be places at vehicle
         # Todo room for more checks!
@@ -231,23 +230,25 @@ class Operators:
         origin_dest_node = self.get_start_loc(calls_to_change, calls_to_change_i)
         travel_cost_at_curr_car = self.TravelCost[car, origin_dest_node[:-1], origin_dest_node[1:]]
         FirstVisitCost = self.FirstTravelCost[car, (self.cargo[calls_to_change[0], 0] - 1).astype(int)]
-        return np.sum([x for x in FirstVisitCost.flatten()] + [y for y in travel_cost_at_curr_car.flatten()]) + np.sum(
-            self.PortCost[car, calls_to_change]) / 2
+        return np.sum([x for x in FirstVisitCost.flatten()] + [y for y in travel_cost_at_curr_car.flatten()]) \
+                + np.sum(self.PortCost[car, calls_to_change]) / 2
 
-    def find_best_pos(self, arr, call, car_index, compatible_vehicles):
+    def find_best_pos(self, arr, call, car_index, comp_vehicles):
         """
-        Iterates over compatible vehicles.
+        Goes through compatible vehicles and searches for the best
+        insertion points. Uses problem specific information to
+        narrow search. Best ranked position is returned
 
         :param arr: solution without calls to change:
         :param call: current call to change :
         :param car_index: start index of cars :
-        :param compatible_vehicles: valid cars to place call :
+        :param comp_vehicles: valid cars to place call :
         :return:
         """
 
-        insert_position = []
-        for vehicle in compatible_vehicles:
-            lower_bound, upper_bound = get_upper_lower_bound(car_index, vehicle)
+        insert_positions = []
+        for v in comp_vehicles:
+            lower_bound, upper_bound = get_upper_lower_bound(car_index, v)
             valid_car_indexes = arr[lower_bound:upper_bound].copy()
             current_min_position, curr_min = (-1, -1), -1
             for pickup in range(len(valid_car_indexes)):
@@ -256,8 +257,8 @@ class Operators:
                 for deliver in range(pickup, len(valid_car_indexes)):
                     potential_call_index = car_indexes.copy()
                     potential_call_index.insert(deliver, call)
-                    if self.validity_check(vehicle, potential_call_index):
-                        cost = self.call_cost(vehicle, potential_call_index)
+                    if self.valid_insertion(v, potential_call_index):
+                        cost = self.call_cost(v, potential_call_index)
                         if cost < curr_min: current_min_position, curr_min = (pickup, deliver), cost
                     else:
                         continue
@@ -266,13 +267,13 @@ class Operators:
             elif len(valid_car_indexes) == 0:
                 current_min_position = (0, 0)
 
-            insert_position = (
+            insert_positions = (
                 lower_bound +
                 current_min_position[0],
                 lower_bound +
                 current_min_position[1])  # shift to insert: pickup, delivery
             break
-        return insert_position
+        return insert_positions
 
     def get_compatible_vehicle(self, call):
         return [i for i in range(self.vehicle) if self.vessel_cargo[i, call - 1]]

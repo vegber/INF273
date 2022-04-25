@@ -1,6 +1,4 @@
 import random
-
-import numpy
 import numpy as np
 
 
@@ -115,15 +113,15 @@ def which_cars(arr, first_swap_index, second_valid_index):
     return car_index[0], car_index[1]
 
 
-def place_at_insert_positions(call, car_index, insert_positions, org_arr_without_calls_to_move):
+def place_at_insert_positions(call, car_index, insert_positions, arr):
     if len(insert_positions) > 0:
-        org_arr_without_calls_to_move.insert(insert_positions[0], call)  # inserts at call and to the right
-        org_arr_without_calls_to_move.insert(insert_positions[1], call)
+        arr.insert(insert_positions[0], call)  # inserts at call and to the right
+        arr.insert(insert_positions[1], call)
     else:
         # no inserts found, place at the end
-        org_arr_without_calls_to_move.insert(car_index[-1], call)
-        org_arr_without_calls_to_move.insert(car_index[-1], call)
-    return org_arr_without_calls_to_move.copy()
+        arr.insert(car_index[-1], call)
+        arr.insert(car_index[-1], call)
+    return arr.copy()
 
 
 def get_vehicle_indexes(org_arr_without_calls_to_move):
@@ -138,16 +136,16 @@ def get_sol_without_calls_to_move(calls, solution):
 
 def get_upper_lower_bound(car_index, vehicle):
     """
-    Returns a tuple of the valid insert start/end index of vehicle
+    Returns a tuple of the valid insert start/end index of vehicle.
+
     :param car_index:
     :param vehicle:
     :return:
     """
     if vehicle == 0:
-        lower_bound, upper_bound = 0, 0
+        return 0, 0
     else:
-        lower_bound, upper_bound = car_index[vehicle - 1] + 1, car_index[vehicle]
-    return lower_bound, upper_bound
+        return car_index[vehicle - 1] + 1, car_index[vehicle]
 
 
 def remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr):
@@ -169,7 +167,6 @@ def is_within_arrival_time(calls_length, current_time, route_travel_time, time_w
     false.
     :param calls_length:
     :param current_time:
-    :param loading_time:
     :param route_travel_time:
     :param time_windows:
     :return:
