@@ -4,7 +4,6 @@ import time
 import matplotlib.pyplot as plt
 
 from operators import *
-from random_solution_driver import get_init, sort_tuple, avg_Cost
 
 path = '../utils_code/pdp_utils/data/pd_problem/'
 file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
@@ -51,10 +50,9 @@ class Algorithms:
         delta_W = []
         start = time.time()
         while len(delta_W) == 0 or sum(delta_W) == 0:
-            for w in range(200):
+            for w in range(100):
                 new_sol = operator(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
-
                 passed, cause = feasibility_check(new_sol, self.problem)
                 if passed and delta_E < 0:
                     incumbent = new_sol
@@ -66,11 +64,11 @@ class Algorithms:
                     delta_W.append(delta_E)
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
-        alfa = pow(fin_temp / T_0,
-                   1 / -9800)
+        alfa = pow(fin_temp / T_0, 1 / 9900)
         T = T_0
-
+        temps = []
         for e in range(1, 9900):
+            temps.append(T)
             new_sol = operator(incumbent)
             delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
 
@@ -87,21 +85,22 @@ class Algorithms:
 
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
+        self.temps.append(temps)
 
-    def get_op(self, operator1: Operators.one_insert, operator2: Operators.k_insert,
-               operator3: Operators.smarter_insert, operator4: Operators.max_cost_swap) -> Operators:
+    def get_op(self, operator1: Operators.one_insert, operator2: Operators.two_inserter,
+               operator3: Operators.max_cost_swap) -> Operators:
         """
 
         :rtype: Operator
         """
-        choices = [operator1, operator2, operator3, operator4]
+        choices = [operator1, operator2, operator3]
         # for even dist: un - comment this
-        return random.choice(choices)
-        # op_index = [0, 1, 2]
-        # elem = random.choices(op_index, weights=[25, 50, 25])[0]
-        # return choices[elem]
+        # return random.choice(choices)
+        op_index = [0, 1, 2]
+        elem = random.choices(op_index, weights=[80, 10, 10])[0]
+        return choices[elem]
 
-    def sa_3op(self, op1, op2, op3, op4):
+    def sa_3op(self, op1, op2, op3):
         s_0 = get_init(self.vehicle, self.calls)
         fin_temp = 0.1
         incumbent = s_0
@@ -110,7 +109,7 @@ class Algorithms:
         start = time.time()
         while len(delta_W) == 0 or sum(delta_W) == 0:
             for w in range(100):
-                op = self.get_op(op1, op2, op3, op4)
+                op = self.get_op(op1, op2, op3)
                 new_sol = op(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
                 passed, cause = feasibility_check(new_sol, self.problem)
@@ -129,7 +128,8 @@ class Algorithms:
         temps = []
         for e in range(1, 9900):
             temps.append(T)
-            new_sol = op1(incumbent)
+            op = self.get_op(op1, op2, op3)
+            new_sol = op(incumbent)
             delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
 
             feas, _ = feasibility_check(new_sol, self.problem)
@@ -205,21 +205,15 @@ def run_all(i):
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
     for i in range(10):
-        m.sa_3op(op.one_insert, op.k_insert, op.smarter_insert, op.max_cost_swap)
-    m.print_stats("All three op (SA): ")
+        m.sa_3op(op.one_insert, op.two_inserter, op.max_cost_swap)
+    m.print_stats("Tuned Operators: ")
     # m.print_temp()
 
 
 if __name__ == '__main__':
-    """
-    myday = Algorithms(file_list[1])
-    op = Operators(myday.problem)
-    myday.sa(op.one_insert)
-    myday.print_stats("One Insert: ")
-    """
+    # Single threaded application
+    # v = [run_all(i) for i in range(6)]
 
-    # v = [run_all(i) for i in range(2)]
-
-    pool = mp.Pool(processes=1)
-
-    pool.map(run_all, range(0, 1))
+    # Multithreading:
+    pool = mp.Pool(processes=2)
+    pool.map(run_all, range(0, 2))
