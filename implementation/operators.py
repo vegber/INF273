@@ -1,178 +1,5 @@
-import os
-import random
-
-import numpy as np
-from natsort import natsorted
-
+from implementation.operator_helper_class import *
 from utils_code.pdp_utils import *
-
-
-def find_zero_swaps(arr):
-    """
-    :returns exact index of possible sol. remember
-    to add +1 in your insert method.
-    :param arr:
-    :return:
-    """
-    backlog = []
-    valid_pos = []
-    for i, elem in enumerate(arr):
-        if elem == 0:
-            valid_pos.append(i)
-            continue
-        backlog.append(elem)
-        if backlog.count(elem) == 2:
-            backlog.remove(elem)
-            backlog.remove(elem)
-        if len(backlog) == 0:
-            valid_pos.append(i)
-
-    return valid_pos
-
-
-def sort_tuple(best_sol_cost_pairs):
-    return sorted(best_sol_cost_pairs, key=lambda x: x[1])
-
-
-def avg_Cost(sorted_10_best_solutions):
-    return sum(x[1] for x in sorted_10_best_solutions) / len(sorted_10_best_solutions)
-
-
-def get_init(vehicle: int, call: int):
-    init = [0] * vehicle
-    for i in range(1, call + 1):
-        init.append(i)
-        init.append(i)
-    return init
-
-
-def fill_2d_zero(two_dim):
-    for x in range(len(two_dim)):
-        if not two_dim[x]:
-            two_dim[x].append(0)
-        elif x != len(two_dim) - 1:
-            two_dim[x].append(0)
-
-    return two_dim
-
-
-def find_indexes(sol_vehicle_arr, random_call):
-    indexes = 0
-    vehicle = 0
-    for x in range(len(sol_vehicle_arr)):
-        var = tuple(i for i, e in enumerate(sol_vehicle_arr[x]) if e == random_call)
-        if var:
-            vehicle = x  # vehicle is not zero index
-            indexes = var
-    return vehicle, indexes[0], indexes[1]
-
-
-def list_format(sol_vehicle_arr, random_perm=False):
-    arr = []
-    for x in sol_vehicle_arr:
-        if not x:
-            arr.append(0)
-        else:
-            if random_perm:
-                random.shuffle(x)
-            for elem in x:
-                arr.append(elem)
-            arr.append(0)
-
-    # edge case
-    if arr[-1] == 0:
-        arr.pop()
-    return arr
-
-
-def find_zero(arr, first_swap_index, second_valid_index):
-    if arr[first_swap_index] == 0:
-        return first_swap_index
-    else:
-        return second_valid_index
-
-
-def extract_good_zero_swaps(arr, legal_zero_swap):
-    return [x for x in legal_zero_swap if arr[x] != 0 and x != (len(arr) - 1)]
-
-
-def get_index_1d(arr, first_swap_value):
-    var = [i for i, e in enumerate(arr) if e == first_swap_value]
-    # should always be two
-    return var[0], var[1]
-
-
-def swap(arr, l1, l2):
-    arr[l1], arr[l2] = arr[l2], arr[l1]
-    return arr
-
-
-def which_cars(arr, first_swap_index, second_valid_index):
-    car_index = []
-    car_count = 0
-    for x in range(len(arr)):
-        if x == first_swap_index or x == second_valid_index:
-            car_index.append(car_count)
-        if arr[x] == 0:
-            car_count += 1
-    return car_index[0], car_index[1]
-
-
-def place_at_insert_positions(call, car_index, insert_positions, org_arr_without_calls_to_move):
-    if len(insert_positions) > 0:
-        org_arr_without_calls_to_move.insert(insert_positions[0], call)  # inserts at call and to the right
-        org_arr_without_calls_to_move.insert(insert_positions[1], call)
-    else:
-        # no inserts found, place at the end
-        org_arr_without_calls_to_move.insert(car_index[-1], call)
-        org_arr_without_calls_to_move.insert(car_index[-1], call)
-    return org_arr_without_calls_to_move.copy()
-
-
-def get_vehicle_indexes(org_arr_without_calls_to_move):
-    car_index = [i for i, x in enumerate(org_arr_without_calls_to_move) if x == 0]
-    return car_index
-
-
-def get_sol_without_calls_to_move(calls, solution):
-    base_solution = [x for x in solution if x not in calls]
-    return base_solution
-
-
-def get_upper_lower_bound(car_index, vehicle):
-    """
-    Returns a tuple of the valid insert start/end index of vehicle
-    :param car_index:
-    :param vehicle:
-    :return:
-    """
-    if vehicle == 0:
-        lower_bound, upper_bound = 0, 0
-    else:
-        lower_bound, upper_bound = car_index[vehicle - 1] + 1, car_index[vehicle]
-    return lower_bound, upper_bound
-
-
-def remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr):
-    sol_vehicle_arr[origin_vehicle].pop(origin_pickup)
-    sol_vehicle_arr[origin_vehicle].pop(origin_delivery - 1)
-
-
-def insert_call(car_to_place, random_call, sol_vehicle_arr):
-    # insert pickup & delivery
-    pickup_index = random.randint(0, len(sol_vehicle_arr[car_to_place]))
-    sol_vehicle_arr[car_to_place].insert(pickup_index, random_call)
-    delivery_index = random.randint(0, len(sol_vehicle_arr[car_to_place]))
-    sol_vehicle_arr[car_to_place].insert(delivery_index, random_call)
-
-
-def is_within_arrival_time(arrive_time, calls_length, current_time, lu_time, route_travel_time, time_windows):
-    for i in range(calls_length):
-        arrive_time[i] = np.max((current_time + route_travel_time[i], time_windows[0, i]))
-        if arrive_time[i] > time_windows[1, i]:
-            return False
-        current_time = arrive_time[i] + lu_time[i]
-    return True
 
 
 class Operators:
@@ -233,36 +60,6 @@ class Operators:
         arr = list_format(sol_vehicle_arr)
         return arr
 
-    def change_car_insert(self, arr, car):
-        """
-        One insert operator:
-        Simply takes random vehicles and puts them in another semi - random vehicle (valid cars)
-        Will only swap calls to valid "places" / cars
-        :param car: car to remove call from
-        :param arr:
-        :return:
-        """
-        sol_vehicle_arr = self.to_list_v2(arr)
-
-        cars_ = [i for i, x in enumerate(sol_vehicle_arr)]
-
-        cars_.remove(car)
-
-        car_to_place = random.choice(cars_)
-
-        valid_placements = self.get_valid_calls(car_to_place)
-
-        random_call = random.choice(valid_placements)
-
-        # check if random vehicle is "itself"
-        origin_vehicle, origin_pickup, origin_delivery = find_indexes(sol_vehicle_arr, random_call)
-        remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr)
-        insert_call(car_to_place, random_call, sol_vehicle_arr)
-
-        # change sol_vehicle_arr back to normal form
-        arr = list_format(sol_vehicle_arr)
-        return arr
-
     def max_cost_swap(self, arr):
         """
         Naive operator. Uses a custom cost function to find the vehicle with most
@@ -299,6 +96,36 @@ class Operators:
         """
         return [self.call_cost(i, x) for i, x in enumerate(arr)]
 
+    def change_car_insert(self, arr, car):
+        """
+        One insert operator:
+        Simply takes random vehicles and puts them in another semi - random vehicle (valid cars)
+        Will only swap calls to valid "places" / cars
+        :param car: car to remove call from
+        :param arr:
+        :return:
+        """
+        sol_vehicle_arr = self.to_list_v2(arr)
+
+        cars_ = [i for i, x in enumerate(sol_vehicle_arr)]
+
+        cars_.remove(car)
+
+        car_to_place = random.choice(cars_)
+
+        valid_placements = self.get_valid_calls(car_to_place)
+
+        random_call = random.choice(valid_placements)
+
+        # check if random vehicle is "itself"
+        origin_vehicle, origin_pickup, origin_delivery = find_indexes(sol_vehicle_arr, random_call)
+        remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr)
+        insert_call(car_to_place, random_call, sol_vehicle_arr)
+
+        # change sol_vehicle_arr back to normal form
+        arr = list_format(sol_vehicle_arr)
+        return arr
+
     def validity_check(self, car, calls_to_place):
         """
         Problem specific validity checker. Boolean "check if" calls can be places at vehicle
@@ -309,75 +136,102 @@ class Operators:
         """
         calls_length = len(calls_to_place)
         if not calls_length: return True  # can apply if not available car
-
-        load_capacity, current_time, total = 0, 0, 0
+        call_size, current_time, total = 0, 0, 0
         calls = np.sort(calls_to_place.copy())
         calls = [x - 1 for x in calls]  # zero index calls
-        index = [i for i, e in enumerate(calls)]
-        load_capacity -= self.cargo[calls, 2]  # matrix (y, x) fetch cargo at call
-        load_capacity[::2] = self.cargo[calls[::2], 2]  # eval calls
-        # check if any vessel is overloaded
-        if not np.any(self.vessel_capacity[car] - [total := total + x for x in load_capacity[index]] < 0):
-            cargo_t_windows = np.zeros((2, calls_length))
-            # (0) origin node,
-            # (1) destination node,
-            # (2) size,
-            # (3) cost of not transporting,
-            # (4) lower-bound time window for pickup,
-            # (5) upper_time window for pickup,
-            # (6) lower-bound time window for delivery,
-            # (7) upper_time window for delivery
-            cargo_t_windows[0] = self.cargo[calls, 6]  # upper_time window for pickup for first call
-            cargo_t_windows[0, ::2] = self.cargo[calls[::2], 4]  # cost of not transporting
-            cargo_t_windows[1] = self.cargo[calls, 7]  # lower - bound time window for delivery
-            cargo_t_windows[1, ::2] = self.cargo[calls[::2], 5]  # lower - bound time window for pickup (5)
-            cargo_t_windows = cargo_t_windows[:, index]
-
-            port_index = self.cargo[calls, 1].astype(int)
-            port_index[::2] = self.cargo[calls[::2], 0]
-            port_index = port_index[index] - 1
-
-            # Todo port cost
-
-            loading_time = self.unloading_time[car, calls]
-            loading_time[::2] = self.loading_time[car, calls[::2]]
-            loading_time = loading_time[index]
-            travel_time_port = self.travel_time[car, port_index[:-1], port_index[1:]]
-            first_visit_time = self.first_travel_time[car, int(self.cargo[calls[0], 0] - 1)]
-            route_travel_time = np.hstack((first_visit_time, travel_time_port.flatten()))
-            arrive_time = np.zeros(calls_length)
-            return is_within_arrival_time(arrive_time,
-                                          calls_length,
-                                          current_time,
-                                          loading_time,
-                                          route_travel_time,
-                                          cargo_t_windows)
+        i = [i for i, e in enumerate(calls)]
+        call_size = self.get_call_size(calls, call_size)
+        # check vessel capacity against call size
+        if not np.any(self.vessel_capacity[car] - [total := total + x for x in call_size[i]] < 0):
+            cargo_t_windows = self.get_call_upper_lower_t_window(calls, calls_length)
+            origin_nodes = self.get_start_loc(calls, i)
+            total_travel_time = self.get_travel_time(calls, car, origin_nodes)
+            return is_within_arrival_time(calls_length, current_time, total_travel_time, cargo_t_windows)
         return False
 
-    def call_cost(self, car, route):
+    def get_call_size(self, calls, call_size):
+        """
+        Returns call size from cargo list
+        :param calls:
+        :param call_size:
+        :return:
+        """
+        call_size -= self.cargo[calls, 2]  # Cargo size for all calls
+        call_size[::2] = self.cargo[calls[::2], 2]  # eval calls
+        return call_size
+
+    def get_start_loc(self, calls, index):
+        """
+        Returns the origin node for calls
+        NB - must be zero indexed
+        :param calls:
+        :param index:
+        :return:
+        """
+        origin_nodes = self.cargo[calls, 1].astype(int)
+        origin_nodes[::2] = self.cargo[calls[::2], 0]
+        return origin_nodes[index] - 1
+
+    def get_travel_time(self, calls, car, origin_nodes):
+        """
+        Find the total travel time for calls.
+        Included first time visit and travel time from origin node
+        to origin node.
+        :param calls:
+        :param car:
+        :param origin_nodes:
+        :return:
+        """
+        first_visit_time = self.first_travel_time[car, int(self.cargo[calls[0], 0] - 1)]  # convert float to
+        travel_time_visited = self.travel_time[car, origin_nodes[:-1], origin_nodes[1:]]
+        return [x for x in first_visit_time.flatten()] + [y for y in travel_time_visited.flatten()]
+
+    def get_call_upper_lower_t_window(self, calls, calls_length):
+        """
+        Finds, and returns the upper/lower time window for nodes.
+        :returns at format
+        [
+            [A_lower_pickup, A_lower_delivery, B_lower_pickup, B_lower_delivery]
+            [A_upper_pickup, A_upper_pickup, B_upper_pickup, B_upper_delivery]
+        ]
+        :param calls:
+        :param calls_length:
+        :return:
+        """
+        cargo_t_windows = np.zeros((2, calls_length))
+        # (0) origin node,
+        # (1) destination node,
+        # (2) size,
+        # (3) cost of not transporting,
+        # (4) lower-bound time window for pickup,
+        # (5) upper_time window for pickup,
+        # (6) lower-bound time window for delivery,
+        # (7) upper_time window for delivery
+        cargo_t_windows[0] = self.cargo[calls, 6]  # upper_time window for pickup for first call
+        cargo_t_windows[0, ::2] = self.cargo[calls[::2], 4]  # lower-bound time window for pickup -- A & B node
+        cargo_t_windows[1] = self.cargo[calls, 7]  # fill cargo delivery schedule with upper_time window for delivery
+        cargo_t_windows[1, ::2] = self.cargo[calls[::2], 5]  # upper_time window for pickup
+        return cargo_t_windows
+
+    def call_cost(self, car, calls):
         """
         Modifiable cost function. Returns the cost current calls.
         Uses the cargo, travel cost, FirstTravelCost, PortCost from the problem.
+        Currently, returns the sum of the modules implemented. Can be changed at a later stage
         :param car:
-        :param route:
+        :param calls:
         :return:
         """
         car = car - 1
 
-        if len(route) == 0:
+        if len(calls) == 0:
             return 0
-
-        calls_to_change = route.copy()
-        calls_to_change = np.sort([x - 1 for x in calls_to_change])
-        calls_to_change_indexes = [i for i, e in enumerate(calls_to_change)]
-
-        cargo_matrix = self.cargo[calls_to_change, 1].astype(int)
-        cargo_matrix[::2] = self.cargo[calls_to_change[::2], 0]  # step - wise two and two fetch at cargo list.comp
-        cargo_matrix = cargo_matrix[calls_to_change_indexes] - 1
-
-        travel_cost_at_curr_car = self.TravelCost[car, cargo_matrix[:-1], cargo_matrix[1:]]
+        calls_to_change = np.sort([x - 1 for x in calls.copy()])
+        calls_to_change_i = get_zeroed_indexes(calls_to_change)
+        origin_dest_node = self.get_start_loc(calls_to_change, calls_to_change_i)
+        travel_cost_at_curr_car = self.TravelCost[car, origin_dest_node[:-1], origin_dest_node[1:]]
         FirstVisitCost = self.FirstTravelCost[car, (self.cargo[calls_to_change[0], 0] - 1).astype(int)]
-        return np.sum(np.hstack((FirstVisitCost, travel_cost_at_curr_car.flatten()))) + np.sum(
+        return np.sum([x for x in FirstVisitCost.flatten()] + [y for y in travel_cost_at_curr_car.flatten()]) + np.sum(
             self.PortCost[car, calls_to_change]) / 2
 
     def find_best_pos(self, arr, call, car_index, compatible_vehicles):
@@ -395,30 +249,28 @@ class Operators:
         for vehicle in compatible_vehicles:
             lower_bound, upper_bound = get_upper_lower_bound(car_index, vehicle)
             valid_car_indexes = arr[lower_bound:upper_bound].copy()
-
-            best_position = (-1, -1)
-            min_cost = -1
-
-            for i in range(len(valid_car_indexes)):
-                first_insert_route = valid_car_indexes.copy()
-                first_insert_route.insert(i, call)
-                for j in range(i, len(valid_car_indexes)):
-                    second_insert_route = first_insert_route.copy()
-                    second_insert_route.insert(j, call)
-                    if not self.validity_check(vehicle, second_insert_route):
+            current_min_position, curr_min = (-1, -1), -1
+            for pickup in range(len(valid_car_indexes)):
+                car_indexes = valid_car_indexes.copy()
+                car_indexes.insert(pickup, call)
+                for deliver in range(pickup, len(valid_car_indexes)):
+                    potential_call_index = car_indexes.copy()
+                    potential_call_index.insert(deliver, call)
+                    if self.validity_check(vehicle, potential_call_index):
+                        cost = self.call_cost(vehicle, potential_call_index)
+                        if cost < curr_min: current_min_position, curr_min = (pickup, deliver), cost
+                    else:
                         continue
-
-                    cost = self.call_cost(vehicle, second_insert_route)
-                    if cost < min_cost:
-                        min_cost = cost
-                        best_position = (i, j)
-
-            if len(valid_car_indexes) > 0 and best_position == (-1, -1):
+            if len(valid_car_indexes) > 0 and current_min_position == (-1, -1):
                 continue
             elif len(valid_car_indexes) == 0:
-                best_position = (0, 0)
+                current_min_position = (0, 0)
 
-            insert_position = (lower_bound + best_position[0], lower_bound + best_position[1])
+            insert_position = (
+                lower_bound +
+                current_min_position[0],
+                lower_bound +
+                current_min_position[1])  # shift to insert: pickup, delivery
             break
         return insert_position
 
@@ -529,20 +381,3 @@ class Operators:
         outsourcing = [x for x in range(1, self.calls + 1)]
         vehicle_valid_calls.append(outsourcing)
         return vehicle_valid_calls
-
-
-"""path = '../utils_code/pdp_utils/data/pd_problem/'
-file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
-
-sol = [23, 23, 1, 1, 0, 11, 11, 17, 17, 0, 16, 16, 24, 24, 5, 5, 2, 2, 31, 31, 0, 6, 6, 13, 13, 0, 8, 8, 26, 32, 32, 26,
-       0, 14, 27, 14, 27, 0, 35, 35, 10, 10, 0, 25, 33, 7, 19, 15, 18, 3, 30, 25, 18, 21, 15, 9, 20, 22, 20, 3, 34, 28,
-       4, 29, 29, 4, 12, 19, 28, 33, 21, 12, 34, 9, 22, 30, 7]
-prob = load_problem(path + file_list[0])
-# a, b = feasibility_check(sol, prob)
-
-op = Operators(prob)
-
-output = op.k_insert(get_init(3, 7))
-
-print(output)
-"""

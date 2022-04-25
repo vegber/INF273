@@ -7,6 +7,7 @@ var = [
     [7, 8, 9]
 ]
 
+print(var[::-1])
 var = np.array(var)
 test = [99, 0, 2, 112]
 
