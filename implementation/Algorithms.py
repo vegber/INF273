@@ -20,6 +20,14 @@ class Algorithms:
         self.top10best_solution = []  # store solution / cost
         self.run_time = []
         self.temps = []
+        self.op1 = None
+        self.op2 = None
+        self.op3 = None
+
+    def set_operators(self, op1, op2, op3):
+        self.op1 = op1
+        self.op2 = op2
+        self.op3 = op3
 
     def loaded_problem(self):
         return self.problem
@@ -36,27 +44,16 @@ class Algorithms:
             if passed and cost_function(new_sol, self.problem) < best_sol_cost:
                 best_solution = new_sol
                 best_sol_cost = cost_function(best_solution, self.problem)
-
         self.run_time.append(time.time() - start)
-
-        # print(cost_function([4, 4, 7, 7, 0, 2, 2, 0, 1, 5, 5, 3, 3, 1, 0, 6, 6], self.unpacked_problem))
-
         self.top10best_solution.append((best_solution, best_sol_cost))
 
-    def get_op(self, operator1: Operators.one_insert, operator2: Operators.two_inserter,
-               operator3: Operators.max_cost_swap) -> Operators:
-        """
-
-        :rtype: Operator
-        """
-        choices = [operator1, operator2, operator3]
-        # for even dist: un - comment this
+    def get_op(self, obj) -> Operators:
+        choices = [self.op1, self.op2, self.op3]
         # return random.choice(choices)
         op_index = [0, 1, 2]
-        elem = random.choices(op_index, weights=[80, 10, 10])[0]
-        return choices[elem]
+        return choices[random.choices(op_index, weights=[70, 15, 15])[0]](obj)
 
-    def sa(self, op1, op2, op3):
+    def sa(self):
         s_0 = get_init(self.vehicle, self.calls)
         fin_temp = 0.1
         incumbent = s_0
@@ -65,8 +62,7 @@ class Algorithms:
         start = time.time()
         while len(delta_W) == 0 or sum(delta_W) == 0:
             for w in range(100):
-                op = self.get_op(op1, op2, op3)
-                new_sol = op(best_solution)
+                new_sol = self.get_op(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
                 passed, cause = feasibility_check(new_sol, self.problem)
                 if passed and delta_E < 0:
@@ -84,21 +80,16 @@ class Algorithms:
         temps = []
         for e in range(1, 9900):
             temps.append(T)
-            op = self.get_op(op1, op2, op3)
-            new_sol = op(incumbent)
+            new_sol = self.get_op(incumbent)
             delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
-
             feas, _ = feasibility_check(new_sol, self.problem)
-
             if feas and delta_E < 0:
                 incumbent = new_sol
                 if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
                     best_solution = incumbent
             elif feas and random.random() < pow(math.e, (-delta_E / T)):
                 incumbent = new_sol
-
             T = alfa * T
-
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
         self.temps.append(temps)
@@ -160,8 +151,9 @@ def run_all(i):
     """
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
+    m.set_operators(op.one_insert, op.two_inserter, op.max_cost_swap)
     for i in range(10):
-        m.sa(op.one_insert, op.two_inserter, op.max_cost_swap)
+        m.sa()
     m.print_stats("Tuned Operators: ")
     # m.print_temp()
 
@@ -172,5 +164,5 @@ if __name__ == '__main__':
     # [run_all(i) for i in range(6)]
 
     # Multithreading:
-    pool = mp.Pool(processes=1)
-    pool.map(run_all, range(0, 1))
+    pool = mp.Pool(processes=6)
+    pool.map(run_all, range(0, 6))
