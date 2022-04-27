@@ -11,6 +11,7 @@ file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
 
 
 class Algorithms:
+
     def __init__(self, problem):
         self.problem_name = problem
         self.problem = load_problem(path + problem)
@@ -20,14 +21,14 @@ class Algorithms:
         self.top10best_solution = []  # store solution / cost
         self.run_time = []
         self.temps = []
-        self.op1 = None
-        self.op2 = None
-        self.op3 = None
+        self.operators = []
+        self.operator_sum = [0] * 3
+        self.operator_weight = [33] * 3  # init equal weights for all
+        self.solution_log = []
+        self.current_operator = None
 
-    def set_operators(self, op1, op2, op3):
-        self.op1 = op1
-        self.op2 = op2
-        self.op3 = op3
+    def set_operators(self, operators):
+        [self.operators.append(x) for x in operators]
 
     def loaded_problem(self):
         return self.problem
@@ -48,10 +49,16 @@ class Algorithms:
         self.top10best_solution.append((best_solution, best_sol_cost))
 
     def get_op(self, obj) -> Operators:
-        choices = [self.op1, self.op2, self.op3]
         # return random.choice(choices)
-        op_index = [0, 1, 2]
-        return choices[random.choices(op_index, weights=[70, 15, 15])[0]](obj)
+        index = random.choices([x for x in range(len(self.operators))], weights=[33, 33, 33])[0]
+        self.set_current_operator(index)
+        return self.operators[index](obj)
+
+    def get_escape_operator(self, arr) -> Operators:
+        # TODO
+        # change this to the most diversifying operator
+        # Currently: "mostly: costing car"
+        return self.operators[2](arr)
 
     def sa(self):
         s_0 = get_init(self.vehicle, self.calls)  # generate init solution
@@ -60,8 +67,7 @@ class Algorithms:
         best_solution = s_0
         delta_W = []
         start = time.time()
-        iterations_since_best_sol = 0
-
+        self.solution_log.append(incumbent)
         # adaptiveness to warmup?
         while len(delta_W) == 0 or sum(delta_W) == 0:
             for w in range(100):
@@ -69,33 +75,64 @@ class Algorithms:
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
                 passed, cause = feasibility_check(new_sol, self.problem)
                 if passed and delta_E < 0:
+                    self.solution_log.append(new_sol)
                     incumbent = new_sol
                     if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
                         best_solution = incumbent
                 elif passed:
+                    self.solution_log.append(new_sol)
                     if random.random() < 0.8:
                         incumbent = new_sol
                     delta_W.append(delta_E)
-        delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
+        delta_AVG = np.average(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0, 1 / 9900)
         T = T_0
         temps = []
+        iterations_since_best_sol = 0
+        escape_condition = 500
+        delta_escape = 0  # don't get stuck in a forever escape loop
         for e in range(1, 9900):
             temps.append(T)
-            new_sol = self.get_op(incumbent)
+            # segments of 100 -- update the weights
+            if e % 100 == 0:
+                self.update_weights()
+
+            if iterations_since_best_sol >= escape_condition and delta_escape <= 50:
+                # escape this local minima
+                new_sol = self.get_escape_operator(incumbent)
+                delta_escape += 1
+            else:
+                new_sol = self.get_op(incumbent)
+                delta_escape = 0  # zero out the escape counter
+
             delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
-            feas, _ = feasibility_check(new_sol, self.problem)
-            if feas and delta_E < 0:
+            feasible, _ = feasibility_check(new_sol, self.problem)
+
+            if new_sol not in self.solution_log:
+                self.solution_log.append(new_sol)
+                self.give_operator_points(1)
+
+            if feasible and delta_E < 0:
                 incumbent = new_sol
+                # found valid solution, and it was better than the previous
+                # 2 points
+                self.give_operator_points(2)
                 if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
+                    # New best solution! Give four points to operator
                     best_solution = incumbent
-            elif feas and random.random() < pow(math.e, (-delta_E / T)):
+                    iterations_since_best_sol = 0
+                    self.give_operator_points(2)
+            elif feasible and random.random() < pow(math.e, (-delta_E / T)):
                 incumbent = new_sol
             T = alfa * T
+            iterations_since_best_sol += 1
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
         self.temps.append(temps)
+
+    def give_operator_points(self, points: int) -> None:
+        self.operator_sum[self.operators.index(self.current_operator)] += points
 
     def print_stats(self, operator_name=None):
         print(self.problem_name, end="\n")
@@ -144,6 +181,12 @@ class Algorithms:
 
         plt.show()
 
+    def update_weights(self):
+        self.operator_weight = [round((i / (sum(self.operator_sum))) * 100) for i in self.operator_sum]
+
+    def set_current_operator(self, index):
+        self.current_operator = self.operators[index]
+
 
 def run_all(i):
     """
@@ -154,7 +197,7 @@ def run_all(i):
     """
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
-    m.set_operators(op.one_insert, op.two_inserter, op.max_cost_swap)
+    m.set_operators([op.one_insert, op.two_inserter, op.max_cost_swap])
     for i in range(10):
         m.sa()
     m.print_stats("Tuned Operators: ")
@@ -167,5 +210,5 @@ if __name__ == '__main__':
     # [run_all(i) for i in range(6)]
 
     # Multithreading:
-    pool = mp.Pool(processes=6)
-    pool.map(run_all, range(0, 6))
+    pool = mp.Pool(processes=1)
+    pool.map(run_all, range(0, 1))

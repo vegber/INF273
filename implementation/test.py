@@ -1,21 +1,12 @@
 # alfa = pow(fin_temp / T_0, 1 / -9900)
+import random
+
 import numpy as np
 
-var = [
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9]
-]
+var = [1]*3
+print(var)
 
-print(var[::-1])
-var = np.array(var)
-test = [99, 0, 2, 112]
+listss = [1, 2, 3, 4]
 
-print(test.index(max(test)))
-
-
-tst = [[1, 2, 3], [4, 5, 6]]
-tst = np.array(tst)
-# print(tst[0, ::2])
-
-
+out = random.choices([x for x in range(len(listss))], weights=[90, 2, 3, 5])[0]
+print(out)
