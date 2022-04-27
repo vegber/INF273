@@ -1,14 +1,10 @@
 import math
-import os
-import random
-import time
 import multiprocessing as mp
-
-import numpy as np
+import os
+import time
+import matplotlib.pyplot as plt
 from natsort import natsorted
-
 from operators import *
-from random_solution_driver import get_init, sort_tuple, avg_Cost
 
 path = '../utils_code/pdp_utils/data/pd_problem/'
 file_list = natsorted(os.listdir(path), key=lambda y: y.lower())
@@ -23,6 +19,18 @@ class Algorithms:
         self.vessel_cargo = self.problem['VesselCargo']
         self.top10best_solution = []  # store solution / cost
         self.run_time = []
+        self.temps = []
+        self.op1 = None
+        self.op2 = None
+        self.op3 = None
+
+    def set_operators(self, op1, op2, op3):
+        self.op1 = op1
+        self.op2 = op2
+        self.op3 = op3
+
+    def loaded_problem(self):
+        return self.problem
 
     def local_search(self, operator):  # define which operator to work on - higher order func.
         init = get_init(self.vehicle, self.calls)
@@ -31,62 +39,60 @@ class Algorithms:
         best_sol_cost = cost_function(best_solution, self.problem)
         start = time.time()
         for it in range(10000):
-            new_sol = operator(best_solution, self.vehicle, self.calls, self.vessel_cargo)
+            new_sol = operator(best_solution)
             passed, _ = feasibility_check(new_sol, self.problem)
             if passed and cost_function(new_sol, self.problem) < best_sol_cost:
                 best_solution = new_sol
                 best_sol_cost = cost_function(best_solution, self.problem)
-
         self.run_time.append(time.time() - start)
-
-        # print(cost_function([4, 4, 7, 7, 0, 2, 2, 0, 1, 5, 5, 3, 3, 1, 0, 6, 6], self.unpacked_problem))
-
         self.top10best_solution.append((best_solution, best_sol_cost))
 
-    def sa(self, operator):
+    def get_op(self, obj) -> Operators:
+        choices = [self.op1, self.op2, self.op3]
+        # return random.choice(choices)
+        op_index = [0, 1, 2]
+        return choices[random.choices(op_index, weights=[70, 15, 15])[0]](obj)
+
+    def sa(self):
         s_0 = get_init(self.vehicle, self.calls)
         fin_temp = 0.1
         incumbent = s_0
         best_solution = s_0
         delta_W = []
-
         start = time.time()
-        for w in range(8000):
-            new_sol = operator(best_solution, self.vehicle, self.calls, self.vessel_cargo)
-            delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
-
-            passed, cause = feasibility_check(new_sol, self.problem)
-            if passed and delta_E < 0:
-                incumbent = new_sol
-                if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
-                    best_solution = incumbent
-            elif passed:
-                if random.random() < 0.8:
+        while len(delta_W) == 0 or sum(delta_W) == 0:
+            for w in range(100):
+                new_sol = self.get_op(best_solution)
+                delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
+                passed, cause = feasibility_check(new_sol, self.problem)
+                if passed and delta_E < 0:
                     incumbent = new_sol
-                delta_W.append(delta_E)
+                    if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
+                        best_solution = incumbent
+                elif passed:
+                    if random.random() < 0.8:
+                        incumbent = new_sol
+                    delta_W.append(delta_E)
         delta_AVG = np.average(delta_W)  # sum(delta_W) / len(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
-        alfa = pow(fin_temp / T_0,
-                   1 / -9900)
+        alfa = pow(fin_temp / T_0, 1 / 9900)
         T = T_0
-
-        for e in range(1, 9000):
-            new_sol = operator(incumbent, self.vehicle, self.calls, self.vessel_cargo)
+        temps = []
+        for e in range(1, 9900):
+            temps.append(T)
+            new_sol = self.get_op(incumbent)
             delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
-
             feas, _ = feasibility_check(new_sol, self.problem)
-
             if feas and delta_E < 0:
                 incumbent = new_sol
                 if cost_function(incumbent, self.problem) < cost_function(best_solution, self.problem):
                     best_solution = incumbent
             elif feas and random.random() < pow(math.e, (-delta_E / T)):
                 incumbent = new_sol
-
             T = alfa * T
-
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
+        self.temps.append(temps)
 
     def print_stats(self, operator_name=None):
         print(self.problem_name, end="\n")
@@ -121,28 +127,42 @@ class Algorithms:
         print(self.top10best_solution[0][0], end="\n")
         print("\n" * 3)
 
+    def print_temp(self):
+        print("Im here")
+        n_model = len(self.temps)
+        fig, axes = plt.subplots(1, n_model, figsize=(7 * n_model, 5), sharey=True, squeeze=False)
+
+        for temp, ax in zip(self.temps, axes.flat):
+            ax.plot(temp, label="Temperature change", color="c")
+            ax.set_title("10k")
+            ax.set_xlabel("Iterations")
+            ax.set_ylabel("Temperature")
+            ax.legend()
+
+        plt.show()
+
 
 def run_all(i):
+    """
+    Method used when running multithreading
+    :ignore else
+    :param i:
+    :return:
+    """
     m = Algorithms(file_list[i])
+    op = Operators(m.problem)
+    m.set_operators(op.one_insert, op.two_inserter, op.max_cost_swap)
     for i in range(10):
-        m.sa(three_exchange)
-    m.print_stats("Three Swap (SA): ")
+        m.sa()
+    m.print_stats("Tuned Operators: ")
+    # m.print_temp()
 
 
 if __name__ == '__main__':
-    """
-    myday = Algorithms(file_list[1])
-    myday.sa(two_exchange)
-    myday.print_stats("Two swap: ")
-    
-    """
-    """
-    for i in range(6):
-        local_hero = Algorithms(file_list[i])
-        for x in range(10):
-            local_hero.sa(three_exchange)
-        local_hero.print_stats("Three Swap (SA): ")  # Local search (1ins)
-    """
-    pool = mp.Pool(processes=6)
+    # Single threaded application
+    # Uncomment this to run single threaded
+    # [run_all(i) for i in range(6)]
 
+    # Multithreading:
+    pool = mp.Pool(processes=6)
     pool.map(run_all, range(0, 6))
