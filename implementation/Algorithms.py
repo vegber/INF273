@@ -54,12 +54,15 @@ class Algorithms:
         return choices[random.choices(op_index, weights=[70, 15, 15])[0]](obj)
 
     def sa(self):
-        s_0 = get_init(self.vehicle, self.calls)
+        s_0 = get_init(self.vehicle, self.calls)  # generate init solution
         fin_temp = 0.1
-        incumbent = s_0
+        incumbent = s_0  # s_best <- s_0
         best_solution = s_0
         delta_W = []
         start = time.time()
+        iterations_since_best_sol = 0
+
+        # adaptiveness to warmup?
         while len(delta_W) == 0 or sum(delta_W) == 0:
             for w in range(100):
                 new_sol = self.get_op(best_solution)
