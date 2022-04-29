@@ -23,7 +23,7 @@ class Algorithms:
         self.temps = []
         self.operators = []
         self.operator_sum = [0] * 3
-        self.operator_weight = [33] * 3  # init equal weights for all
+        self.operator_weight = [33, 33, 33]  # init equal weights for all
         self.solution_log = []
         self.current_operator = None
 
@@ -50,7 +50,7 @@ class Algorithms:
 
     def get_op(self, obj) -> Operators:
         # return random.choice(choices)
-        index = random.choices([x for x in range(len(self.operators))], weights=[33, 33, 33])[0]
+        index = random.choices([x for x in range(len(self.operators))], weights=self.operator_weight)[0]
         self.set_current_operator(index)
         return self.operators[index](obj)
 
@@ -58,7 +58,7 @@ class Algorithms:
         # TODO
         # change this to the most diversifying operator
         # Currently: "mostly: costing car"
-        return self.operators[2](arr)
+        return self.operators[1](arr)
 
     def sa(self):
         s_0 = get_init(self.vehicle, self.calls)  # generate init solution
@@ -92,16 +92,18 @@ class Algorithms:
         iterations_since_best_sol = 0
         escape_condition = 500
         delta_escape = 0  # don't get stuck in a forever escape loop
+        escape_counter = 0
         for e in range(1, 9900):
             temps.append(T)
             # segments of 100 -- update the weights
-            if e % 100 == 0:
+            if e % 500 == 0:
                 self.update_weights()
 
             if iterations_since_best_sol >= escape_condition and delta_escape <= 50:
                 # escape this local minima
                 new_sol = self.get_escape_operator(incumbent)
                 delta_escape += 1
+                escape_counter += 1
             else:
                 new_sol = self.get_op(incumbent)
                 delta_escape = 0  # zero out the escape counter
@@ -122,11 +124,13 @@ class Algorithms:
                     # New best solution! Give four points to operator
                     best_solution = incumbent
                     iterations_since_best_sol = 0
-                    self.give_operator_points(2)
+                    self.give_operator_points(4)
             elif feasible and random.random() < pow(math.e, (-delta_E / T)):
                 incumbent = new_sol
             T = alfa * T
             iterations_since_best_sol += 1
+        # print(f"Escape algorithm ran: {escape_counter} times")
+        # print(f"\nWeights are {''.join(str(self.operator_weight))}")
         self.run_time.append(time.time() - start)
         self.top10best_solution.append((best_solution, cost_function(best_solution, self.problem)))
         self.temps.append(temps)
@@ -168,7 +172,6 @@ class Algorithms:
         print("\n" * 3)
 
     def print_temp(self):
-        print("Im here")
         n_model = len(self.temps)
         fig, axes = plt.subplots(1, n_model, figsize=(7 * n_model, 5), sharey=True, squeeze=False)
 
@@ -197,10 +200,13 @@ def run_all(i):
     """
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
-    m.set_operators([op.one_insert, op.two_inserter, op.max_cost_swap])
+    m.set_operators([op.one_insert,
+                     op.max_cost_swap,
+                     op.two_inserter
+                     ])
     for i in range(10):
         m.sa()
-    m.print_stats("Tuned Operators: ")
+    m.print_stats("Tuned Op: ")
     # m.print_temp()
 
 
@@ -210,5 +216,5 @@ if __name__ == '__main__':
     # [run_all(i) for i in range(6)]
 
     # Multithreading:
-    pool = mp.Pool(processes=1)
-    pool.map(run_all, range(0, 1))
+    pool = mp.Pool(processes=6)
+    pool.map(run_all, range(0, 6))

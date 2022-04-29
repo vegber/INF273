@@ -1,9 +1,12 @@
+import random
+
 from implementation.operator_helper_class import *
 from utils_code.pdp_utils import *
 
 
 class Operators:
     def __init__(self, loaded_problem):
+        self.problem = loaded_problem
         self.vehicle = loaded_problem['n_vehicles']
         self.calls = loaded_problem['n_calls']
         self.vessel_cargo = loaded_problem['VesselCargo']
@@ -16,6 +19,7 @@ class Operators:
         self.TravelCost = loaded_problem['TravelCost']
         self.FirstTravelCost = loaded_problem['FirstTravelCost']
         self.PortCost = loaded_problem['PortCost']
+        self.glob_ind = 0.5
 
     def one_insert(self, arr):
         """
@@ -31,12 +35,6 @@ class Operators:
         random_call = random.choice(valid_placements)
         # check if random vehicle is "itself"
         origin_vehicle, origin_pickup, origin_delivery = find_indexes(sol_vehicle_arr, random_call)
-        """
-        Two cases: 
-        if call to new vehicle - delivery must also follow
-    
-        if call to same vehicle - only change index of pickup 
-        """
         # if call is to be places in same vehicle - change index
         if random_vehicle == origin_vehicle:  # call in same vehicle - change index
             # only change index of pickup
@@ -53,6 +51,7 @@ class Operators:
             insert_call(random_vehicle, random_call, sol_vehicle_arr)
         # change sol_vehicle_arr back to normal form
         arr = list_format(sol_vehicle_arr)
+        feas, _ = feasibility_check(arr, self.problem)
         return arr
 
     def max_cost_swap(self, arr):
@@ -66,18 +65,20 @@ class Operators:
         car_cost = self.car_cost(sol_vehicle_arr)
         car_to_change = car_cost.index(max(car_cost))  # select vehicle with the highest cost not zero indexed.
         out = self.change_car_insert(arr, car_to_change)
+        passed, _ = feasibility_check(arr, self.problem)
         return out
 
-    def two_inserter(self, arr):
+    def k_insert(self, arr, K):
         """
         Two insert method that removes two random delivery calls.
         Insertion is helped by checking problem specific data at
         the removed calls. Efficient at pointing the search at
         the right "track"...
+        :param K:
         :param arr:
         :return:
         """
-        calls = random.sample(range(1, self.calls + 1), k=2)
+        calls = random.sample(range(1, self.calls + 1), k=K)
         org_arr_without_calls_to_move = get_sol_without_calls_to_move(calls, arr)
 
         for call in calls:
@@ -86,6 +87,15 @@ class Operators:
             insert_positions = self.find_best_pos(org_arr_without_calls_to_move, call, car_index, compatible_vehicles)
             place_at_insert_positions(call, car_index, insert_positions, org_arr_without_calls_to_move)
         return org_arr_without_calls_to_move.copy()
+
+    def two_inserter(self, arr):
+        return self.k_insert(arr, 2)
+
+    def more_insert(self, arr):
+        return self.k_insert(arr, random.choice([2, 3, 4]))
+
+    def smarter_one_insert(self, arr):
+        return self.k_insert(arr, 1)
 
     def car_cost(self, arr):
         """
