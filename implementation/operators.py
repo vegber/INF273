@@ -19,7 +19,7 @@ class Operators:
         self.TravelCost = loaded_problem['TravelCost']
         self.FirstTravelCost = loaded_problem['FirstTravelCost']
         self.PortCost = loaded_problem['PortCost']
-        self.glob_ind = 0.5
+        self.glob_ind = 0.8
 
     def one_insert(self, arr):
         """
@@ -29,30 +29,33 @@ class Operators:
         :param arr:
         :return:
         """
-        sol_vehicle_arr = self.to_list_v2(arr)
-        random_vehicle = random.randint(0, self.vehicle)  # zero indexed
-        valid_placements = self.get_valid_calls(random_vehicle)
-        random_call = random.choice(valid_placements)
-        # check if random vehicle is "itself"
-        origin_vehicle, origin_pickup, origin_delivery = find_indexes(sol_vehicle_arr, random_call)
-        # if call is to be places in same vehicle - change index
-        if random_vehicle == origin_vehicle:  # call in same vehicle - change index
-            # only change index of pickup
-            sol_vehicle_arr[random_vehicle].pop(origin_pickup)  # remove origin pickup
+        while True:
+            sol_vehicle_arr = self.to_list_v2(arr)
+            random_vehicle = random.randint(0, self.vehicle)  # zero indexed
+            valid_placements = self.get_valid_calls(random_vehicle)
+            random_call = random.choice(valid_placements)
+            # check if random vehicle is "itself"
+            origin_vehicle, origin_pickup, origin_delivery = find_indexes(sol_vehicle_arr, random_call)
+            # if call is to be places in same vehicle - change index
+            if random_vehicle == origin_vehicle:  # call in same vehicle - change index
+                # only change index of pickup
+                sol_vehicle_arr[random_vehicle].pop(origin_pickup)  # remove origin pickup
 
-            # find new pickup index
-            index = random.randint(0, len(sol_vehicle_arr[random_vehicle]))
-            sol_vehicle_arr[random_vehicle].insert(index, random_call)
-        else:  # call not in same vehicle
-            # remove pickup
-            remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr)
+                # find new pickup index
+                index = random.randint(0, len(sol_vehicle_arr[random_vehicle]))
+                sol_vehicle_arr[random_vehicle].insert(index, random_call)
+            else:  # call not in same vehicle
+                # remove pickup
+                remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr)
 
-            # insert pickup & delivery
-            insert_call(random_vehicle, random_call, sol_vehicle_arr)
-        # change sol_vehicle_arr back to normal form
-        arr = list_format(sol_vehicle_arr)
-        feas, _ = feasibility_check(arr, self.problem)
-        return arr
+                # insert pickup & delivery
+                insert_call(random_vehicle, random_call, sol_vehicle_arr)
+            # change sol_vehicle_arr back to normal form
+            arr = list_format(sol_vehicle_arr)
+
+            feas, _ = feasibility_check(arr, self.problem)
+            if feas or self.glob_ind > random.random():
+                return arr
 
     def max_cost_swap(self, arr):
         """
@@ -65,7 +68,7 @@ class Operators:
         car_cost = self.car_cost(sol_vehicle_arr)
         car_to_change = car_cost.index(max(car_cost))  # select vehicle with the highest cost not zero indexed.
         out = self.change_car_insert(arr, car_to_change)
-        passed, _ = feasibility_check(arr, self.problem)
+        # passed, _ = feasibility_check(arr, self.problem)
         return out
 
     def k_insert(self, arr, K):
@@ -241,7 +244,7 @@ class Operators:
         travel_cost_at_curr_car = self.TravelCost[car, origin_dest_node[:-1], origin_dest_node[1:]]
         FirstVisitCost = self.FirstTravelCost[car, (self.cargo[calls_to_change[0], 0] - 1).astype(int)]
         return np.sum([x for x in FirstVisitCost.flatten()] + [y for y in travel_cost_at_curr_car.flatten()]) \
-                + np.sum(self.PortCost[car, calls_to_change]) / 2
+               + np.sum(self.PortCost[car, calls_to_change]) / 2
 
     def find_best_pos(self, arr, call, car_index, comp_vehicles):
         """

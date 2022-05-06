@@ -58,11 +58,11 @@ class Algorithms:
         # TODO
         # change this to the most diversifying operator
         # Currently: "mostly: costing car"
-        return self.operators[1](arr)
+        return self.operators[2](arr)
 
     def sa(self):
         s_0 = get_init(self.vehicle, self.calls)  # generate init solution
-        fin_temp = 0.1
+        fin_temp = 0.2  # 0.1
         incumbent = s_0  # s_best <- s_0
         best_solution = s_0
         delta_W = []
@@ -71,7 +71,7 @@ class Algorithms:
         # adaptiveness to warmup?
         while len(delta_W) == 0 or sum(delta_W) == 0:
             for w in range(100):
-                new_sol = self.get_op(best_solution)
+                new_sol = self.operators[0](best_solution)  # self.get_op(best_solution)
                 delta_E = cost_function(new_sol, self.problem) - cost_function(incumbent, self.problem)
                 passed, cause = feasibility_check(new_sol, self.problem)
                 if passed and delta_E < 0:
@@ -81,22 +81,23 @@ class Algorithms:
                         best_solution = incumbent
                 elif passed:
                     self.solution_log.append(new_sol)
-                    if random.random() < 0.8:
+                    if random.random() < 0.8:  # 0.8
                         incumbent = new_sol
                     delta_W.append(delta_E)
         delta_AVG = np.average(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
-        alfa = pow(fin_temp / T_0, 1 / 9900)
+        alfa = pow(fin_temp / T_0, 1 / 19900)
+        # print(alfa)
         T = T_0
         temps = []
         iterations_since_best_sol = 0
-        escape_condition = 500
+        escape_condition = 400  # 500
         delta_escape = 0  # don't get stuck in a forever escape loop
         escape_counter = 0
         for e in range(1, 9900):
             temps.append(T)
             # segments of 100 -- update the weights
-            if e % 500 == 0:
+            if e % 300 == 0:
                 self.update_weights()
 
             if iterations_since_best_sol >= escape_condition and delta_escape <= 50:
@@ -177,7 +178,7 @@ class Algorithms:
 
         for temp, ax in zip(self.temps, axes.flat):
             ax.plot(temp, label="Temperature change", color="c")
-            ax.set_title("10k")
+            ax.set_title(self.problem_name)
             ax.set_xlabel("Iterations")
             ax.set_ylabel("Temperature")
             ax.legend()
@@ -201,10 +202,10 @@ def run_all(i):
     m = Algorithms(file_list[i])
     op = Operators(m.problem)
     m.set_operators([op.one_insert,
-                     op.max_cost_swap,
-                     op.two_inserter
+                     op.smarter_one_insert,
+                     op.max_cost_swap
                      ])
-    for i in range(10):
+    for i in range(5):
         m.sa()
     m.print_stats("Tuned Op: ")
     # m.print_temp()
@@ -216,5 +217,5 @@ if __name__ == '__main__':
     # [run_all(i) for i in range(6)]
 
     # Multithreading:
-    pool = mp.Pool(processes=6)
-    pool.map(run_all, range(0, 6))
+    pool = mp.Pool(processes=5)
+    pool.map(run_all, range(0, 5))

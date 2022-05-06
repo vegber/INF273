@@ -154,10 +154,11 @@ def remove_call(origin_delivery, origin_pickup, origin_vehicle, sol_vehicle_arr)
 
 
 def insert_call(car_to_place, random_call, sol_vehicle_arr):
+
     # insert pickup & delivery
     pickup_index = random.randint(0, len(sol_vehicle_arr[car_to_place]))
-    sol_vehicle_arr[car_to_place].insert(pickup_index, random_call)
     delivery_index = random.randint(0, len(sol_vehicle_arr[car_to_place]))
+    sol_vehicle_arr[car_to_place].insert(pickup_index, random_call)
     sol_vehicle_arr[car_to_place].insert(delivery_index, random_call)
 
 
