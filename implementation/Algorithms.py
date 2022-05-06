@@ -100,7 +100,7 @@ class Algorithms:
             if e % 300 == 0:
                 self.update_weights()
 
-            if iterations_since_best_sol >= escape_condition and delta_escape <= 50:
+            if iterations_since_best_sol >= escape_condition and delta_escape <= 100:
                 # escape this local minima
                 new_sol = self.get_escape_operator(incumbent)
                 delta_escape += 1
@@ -125,7 +125,7 @@ class Algorithms:
                     # New best solution! Give four points to operator
                     best_solution = incumbent
                     iterations_since_best_sol = 0
-                    self.give_operator_points(4)
+                    self.give_operator_points(5)
             elif feasible and random.random() < pow(math.e, (-delta_E / T)):
                 incumbent = new_sol
             T = alfa * T
@@ -205,7 +205,7 @@ def run_all(i):
                      op.smarter_one_insert,
                      op.max_cost_swap
                      ])
-    for i in range(5):
+    for i in range(1):
         m.sa()
     m.print_stats("Tuned Op: ")
     # m.print_temp()

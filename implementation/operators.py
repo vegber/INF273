@@ -64,12 +64,14 @@ class Operators:
         :param arr:
         :return:
         """
-        sol_vehicle_arr = self.to_list_v2(arr)
-        car_cost = self.car_cost(sol_vehicle_arr)
-        car_to_change = car_cost.index(max(car_cost))  # select vehicle with the highest cost not zero indexed.
-        out = self.change_car_insert(arr, car_to_change)
-        # passed, _ = feasibility_check(arr, self.problem)
-        return out
+        while True:
+            sol_vehicle_arr = self.to_list_v2(arr)
+            car_cost = self.car_cost(sol_vehicle_arr)
+            car_to_change = car_cost.index(max(car_cost))  # select vehicle with the highest cost not zero indexed.
+            out = self.change_car_insert(arr, car_to_change)
+            passed, _ = feasibility_check(out, self.problem)
+            if passed and random.random() < self.glob_ind:
+                return out
 
     def k_insert(self, arr, K):
         """
