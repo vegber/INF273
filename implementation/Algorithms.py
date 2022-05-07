@@ -26,6 +26,8 @@ class Algorithms:
         self.operator_weight = [33, 33, 33]  # init equal weights for all
         self.solution_log = []
         self.current_operator = None
+        self.R = 0.8
+        self.operator_count = [0] * 3
 
     def set_operators(self, operators):
         [self.operators.append(x) for x in operators]
@@ -186,6 +188,8 @@ class Algorithms:
         plt.show()
 
     def update_weights(self):
+        # Score / antall ganger  = X
+        # (1-R)+R*(score_i/antall_ganger_i)
         self.operator_weight = [round((i / (sum(self.operator_sum))) * 100) for i in self.operator_sum]
 
     def set_current_operator(self, index):
@@ -200,22 +204,23 @@ def run_all(i):
     :return:
     """
     m = Algorithms(file_list[i])
-    """  if i == 1:
+    if i == 0:
+        op = Operators(m.problem, 0)
+    elif i == 1:
         op = Operators(m.problem, 0)
     elif i == 2:
         op = Operators(m.problem, 0)
     elif i == 3:
-        op = Operators(m.problem, 0)
+        op = Operators(m.problem, 0.1)
     elif i == 4:
-        op = Operators(m.problem, 0)
+        op = Operators(m.problem, 0.1)
     else:
-        """
-    op = Operators(m.problem)
+        op = Operators(m.problem)
     m.set_operators([op.one_insert,
                      op.smarter_one_insert,
                      op.max_cost_swap
                      ])
-    for i in range(1):
+    for i in range(10):
         m.sa()
     m.print_stats("Tuned Op: \t\t")
     # m.print_temp()
