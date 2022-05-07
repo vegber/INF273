@@ -5,7 +5,7 @@ from utils_code.pdp_utils import *
 
 
 class Operators:
-    def __init__(self, loaded_problem):
+    def __init__(self, loaded_problem, global_probability=1):
         self.problem = loaded_problem
         self.vehicle = loaded_problem['n_vehicles']
         self.calls = loaded_problem['n_calls']
@@ -19,7 +19,8 @@ class Operators:
         self.TravelCost = loaded_problem['TravelCost']
         self.FirstTravelCost = loaded_problem['FirstTravelCost']
         self.PortCost = loaded_problem['PortCost']
-        self.glob_ind = 0.8
+        self.glob_ind = 1 - global_probability  # - (0.1 * global_probability)
+        print(self.glob_ind)
 
     def one_insert(self, arr):
         """
@@ -70,7 +71,7 @@ class Operators:
             car_to_change = car_cost.index(max(car_cost))  # select vehicle with the highest cost not zero indexed.
             out = self.change_car_insert(arr, car_to_change)
             passed, _ = feasibility_check(out, self.problem)
-            if passed and random.random() < self.glob_ind:
+            if passed or random.random() > self.glob_ind:
                 return out
 
     def k_insert(self, arr, K):

@@ -100,7 +100,7 @@ class Algorithms:
             if e % 300 == 0:
                 self.update_weights()
 
-            if iterations_since_best_sol >= escape_condition and delta_escape <= 100:
+            if iterations_since_best_sol >= escape_condition and delta_escape <= 50:
                 # escape this local minima
                 new_sol = self.get_escape_operator(incumbent)
                 delta_escape += 1
@@ -200,6 +200,16 @@ def run_all(i):
     :return:
     """
     m = Algorithms(file_list[i])
+    """  if i == 1:
+        op = Operators(m.problem, 0)
+    elif i == 2:
+        op = Operators(m.problem, 0)
+    elif i == 3:
+        op = Operators(m.problem, 0)
+    elif i == 4:
+        op = Operators(m.problem, 0)
+    else:
+        """
     op = Operators(m.problem)
     m.set_operators([op.one_insert,
                      op.smarter_one_insert,
@@ -207,7 +217,7 @@ def run_all(i):
                      ])
     for i in range(1):
         m.sa()
-    m.print_stats("Tuned Op: ")
+    m.print_stats("Tuned Op: \t\t")
     # m.print_temp()
 
 
