@@ -20,7 +20,6 @@ class Operators:
         self.FirstTravelCost = loaded_problem['FirstTravelCost']
         self.PortCost = loaded_problem['PortCost']
         self.glob_ind = 1 - global_probability  # - (0.1 * global_probability)
-        print(self.glob_ind)
 
     def one_insert(self, arr):
         """

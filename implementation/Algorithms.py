@@ -188,8 +188,6 @@ class Algorithms:
         plt.show()
 
     def update_weights(self):
-        # Score / antall ganger  = X
-        # (1-R)+R*(score_i/antall_ganger_i)
         self.operator_weight = [round((i / (sum(self.operator_sum))) * 100) for i in self.operator_sum]
 
     def set_current_operator(self, index):
@@ -220,9 +218,9 @@ def run_all(i):
                      op.smarter_one_insert,
                      op.max_cost_swap
                      ])
-    for i in range(10):
+    for i in range(1):
         m.sa()
-    m.print_stats("Tuned Op: \t\t")
+    m.print_stats("Custom SA: \t\t")
     # m.print_temp()
 
 
