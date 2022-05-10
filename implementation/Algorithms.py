@@ -85,7 +85,6 @@ class Algorithms:
         delta_AVG = np.average(delta_W)
         T_0 = (-delta_AVG) / np.log(0.8)
         alfa = pow(fin_temp / T_0, 1 / 35000)
-        # print(alfa)
         T = T_0
         temps = []
         iterations_since_best_sol = 0
@@ -217,7 +216,7 @@ def run_all(i):
     for i in range(1):
         m.sa()
     m.print_stats("Custom SA: \t\t")
-    m.print_temp()
+    # m.print_temp()
 
 
 if __name__ == '__main__':
