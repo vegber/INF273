@@ -231,7 +231,7 @@ class Operators:
         travel_cost_at_curr_car = self.TravelCost[car, origin_dest_node[:-1], origin_dest_node[1:]]
         FirstVisitCost = self.FirstTravelCost[car, (self.cargo[calls_to_change[0], 0] - 1).astype(int)]
         return np.sum([x for x in FirstVisitCost.flatten()] + [y for y in travel_cost_at_curr_car.flatten()]) \
-                + np.sum(self.PortCost[car, calls_to_change]) / 2
+               + np.sum(self.PortCost[car, calls_to_change]) / 2
 
     def find_best_pos(self, arr, call, car_index, comp_vehicles):
         """

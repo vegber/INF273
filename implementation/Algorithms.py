@@ -60,7 +60,6 @@ class Algorithms:
         best_solution = s_0
         delta_W = []
         start = time.time()
-        iterations_since_best_sol = 0
 
         # adaptiveness to warmup?
         while len(delta_W) == 0 or sum(delta_W) == 0:
